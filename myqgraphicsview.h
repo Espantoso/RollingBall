@@ -16,5 +16,6 @@ public slots:
     // void mouseReleaseEvent(QMouseEvent * e);
     // void mouseDoubleClickEvent(QMouseEvent * e);
     // void mouseMoveEvent(QMouseEvent * e);
+    void keyPressEvent(QKeyEvent *e);
 };
 #endif // MYQGRAPHICSVIEW_H

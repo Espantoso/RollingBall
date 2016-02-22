@@ -19,8 +19,7 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
     field.h \
-    myqgraphicsview.h \
-    scene.h
+    myqgraphicsview.h
 
 FORMS    += mainwindow.ui
 
