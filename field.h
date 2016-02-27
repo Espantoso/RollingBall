@@ -5,6 +5,7 @@
 #include <QString>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
 class Field;
 class FieldCell
 {
@@ -12,6 +13,7 @@ friend Field;
 private:
     QString type;
 };
+
 class Field
 {
 public:
@@ -23,4 +25,5 @@ private:
     int width_in_cells;
     int height_in_cells;
 };
+
 #endif // FIELD_H
