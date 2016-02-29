@@ -8,6 +8,7 @@ Field::Field(QString mas[WIDTH][HEIGHT], int width, int height)
     width_in_cells=width;
     height_in_cells=height;
 }
+
 void Field::draw(float width, float height, QGraphicsScene *scene)
 {
     float optimal_height=height/height_in_cells;
