@@ -1,5 +1,10 @@
 #include "field.h"
 
+class test
+{
+	int qqq;
+};
+
 Field::Field(QString mas[WIDTH][HEIGHT], int width, int height)
 {
     for(int i=0; i<width; i++)
