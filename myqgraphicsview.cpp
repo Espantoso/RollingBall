@@ -3,6 +3,7 @@
 #include "field.h"
 #include <QPointF>
 #include <QTextDocument>
+
 bool isInMenu, isInMainMenu, isInPauseMenu;
 void StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
