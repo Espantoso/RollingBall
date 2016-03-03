@@ -15,11 +15,13 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     field.cpp \
-    myqgraphicsview.cpp
+    myqgraphicsview.cpp \
+    ball.cpp
 
 HEADERS  += mainwindow.h \
     field.h \
-    myqgraphicsview.h
+    myqgraphicsview.h \
+    ball.h
 
 FORMS    += mainwindow.ui
 

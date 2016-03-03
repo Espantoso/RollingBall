@@ -1,9 +1,14 @@
 #ifndef MYQGRAPHICSVIEW_H
 #define MYQGRAPHICSVIEW_H
+
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QGraphicsEllipseItem>
 #include <QMouseEvent>
+//
+#define PLANE_WIDTH 10
+#define PLANE_HEIGHT 10
+
 class MyQGraphicsView : public QGraphicsView
 {
     Q_OBJECT
@@ -18,4 +23,5 @@ public slots:
     // void mouseMoveEvent(QMouseEvent * e);
     void keyPressEvent(QKeyEvent *e);
 };
+
 #endif // MYQGRAPHICSVIEW_H

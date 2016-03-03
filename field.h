@@ -7,6 +7,7 @@
 #include "ui_mainwindow.h"
 
 class Field;
+
 class FieldCell
 {
 friend Field;

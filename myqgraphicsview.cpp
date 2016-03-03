@@ -14,11 +14,12 @@ void StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
     scene->setBackgroundBrush(Qt::black);
     //scene->addRect(0, 0, 5*ui->graphicsView->width(), 12*ui->graphicsView->height(), QPen(Qt::white), QBrush(Qt::white));
     QString str_field[WIDTH][HEIGHT];
-    for(int i=0; i<5; i++)
-        for(int j=0; j<10; j++)
+	for(int i=0; i<PLANE_WIDTH; i++)
+		for(int j=0; j<PLANE_HEIGHT; j++)
             str_field[i][j]="empty";
-    Field field(str_field, 5, 10);
-    field.draw(500, 550, scene);
+	Field field(str_field, PLANE_WIDTH, PLANE_HEIGHT);
+	field.draw(500, 550, scene);
+	//scene->addEllipse(10, 10, 10, 10, QPen(Qt::black), QBrush(Qt::red));//( , , , , border, filling)
     //graphicsView->show();
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
