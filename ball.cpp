@@ -3,12 +3,15 @@
 Ball::Ball(QPointF start_pos, double direction)
 {
     this->start_pos=start_pos;
-	this->dir=direction;
+    this->dir=direction;
     this->setPos(start_pos);
+}
+Ball::Ball()
+{
 }
 QRectF Ball::boundingRect() const
 {
-    return QRectF(0, 0, 500, 500);
+    return QRectF(-25, -25, 50, 50);
 }
 void Ball::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)//отрисовка мяча
 {
@@ -17,13 +20,13 @@ void Ball::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
     painter->save();
     painter->setPen(Qt::transparent);//без контура
     painter->setBrush(QBrush(Qt::red));
-    painter->drawEllipse(start_pos, 20, 20);
+    painter->drawEllipse(boundingRect().center(), 20, 20);
     painter->restore();
 }
 QPainterPath Ball::shape() const
 {
     QPainterPath path;
-    path.addEllipse(start_pos, 20, 20);
+    path.addEllipse(boundingRect().center(), 20, 20);
     return path;
 }
 QPointF Ball::getNextPoint(QPointF startPoint, qreal angle, qreal leng)
@@ -55,4 +58,8 @@ void Ball::setDir(double dir)
 void Ball::setMeliage(double mel)
 {
     this->meliage=mel;
+}
+void Ball::setStartPosition(QPointF pos)
+{
+    start_pos=pos;
 }

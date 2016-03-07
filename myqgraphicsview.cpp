@@ -30,14 +30,17 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     if(!timer)
         timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(slot_timerOut()), Qt::UniqueConnection);
-    ball=new Ball(QPointF(200, 100), 0);
+    ball=new Ball(QPointF(100, 100), 0);
     connect(this, SIGNAL(signal_moveToNextPosition()), ball, SLOT(slot_moveToNextPosition()));
     scene->addItem(ball);
-    timer->start(50);
+    timer->start(5);
     lineLeft = scene->addLine(0, 0, 0, 500);
     lineRight = scene->addLine(500, 0, 500, 500);
     lineTop = scene->addLine(0, 0, 500, 0);
     lineBottom = scene->addLine(0, 500, 500, 500);
+    scene->addLine(100, 0, 100, 500);
+    scene->addLine(300, 0, 300, 500);
+    scene->addLine(400, 0, 400, 500);
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
