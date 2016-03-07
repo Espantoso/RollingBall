@@ -4,7 +4,6 @@
 #include "myqgraphicsview.h"
 #include <QGraphicsTextItem>
 #include <QTextDocument>
-
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent),
     ui(new Ui::MainWindow)

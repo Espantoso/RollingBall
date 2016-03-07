@@ -29,5 +29,5 @@ void Field::draw(float width, float height, QGraphicsScene *scene)
             else if(field[i][j].type=="empty")
 				scene->addRect(i*size, j*size, size, size, QPen(Qt::black), QBrush(Qt::white));
         }
-	scene->addEllipse(size/4, size/4, size/2, size/2, QPen(Qt::black), QBrush(Qt::red));//( , , , , border, filling)
+    //scene->addEllipse(size/4, size/4, size/2, size/2, QPen(Qt::black), QBrush(Qt::red));//( , , , , border, filling)
 }
