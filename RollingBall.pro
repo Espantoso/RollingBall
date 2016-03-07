@@ -16,12 +16,14 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     field.cpp \
     myqgraphicsview.cpp \
-    ball.cpp
+    ball.cpp \
+    wall.cpp
 
 HEADERS  += mainwindow.h \
     field.h \
     myqgraphicsview.h \
-    ball.h
+    ball.h \
+    wall.h
 
 FORMS    += mainwindow.ui
 

@@ -16,6 +16,7 @@ public:
     QGraphicsScene *scene;
     void StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void BackToGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
+    void Completed();
 signals:
     void signal_moveToNextPosition();
 public slots:
