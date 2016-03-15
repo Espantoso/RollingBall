@@ -44,40 +44,8 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     lineBottom = scene->addLine(0, 500, 500, 500);
     finish=scene->addRect(200, 400, 50, 50, QPen(Qt::green), QBrush(Qt::green));
     wall->clear(scene);//Линия, которую должен добавлять пользователь(добавлена для тестирования)
-    wall->addWallPoint(scene, 200, 100);
-    wall->addWallPoint(scene, 201, 101);
-    wall->addWallPoint(scene, 202, 102);
-    wall->addWallPoint(scene, 203, 103);
-    wall->addWallPoint(scene, 204, 103);
-    wall->addWallPoint(scene, 205, 102);
-    wall->addWallPoint(scene, 206, 101);
-    wall->addWallPoint(scene, 207, 100);
-    wall->addWallPoint(scene, 199, 99);
-    wall->addWallPoint(scene, 198, 98);
-    wall->addWallPoint(scene, 197, 97);
-    wall->addWallPoint(scene, 196, 96);
-    /*QGraphicsEllipseItem *e2=scene->addEllipse(201, 101, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e2);
-    QGraphicsEllipseItem *e3=scene->addEllipse(202, 102, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e3);
-    QGraphicsEllipseItem *e4=scene->addEllipse(203, 103, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e4);
-    QGraphicsEllipseItem *e5=scene->addEllipse(204, 103, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e5);
-    QGraphicsEllipseItem *e6=scene->addEllipse(205, 102, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e6);
-    QGraphicsEllipseItem *e7=scene->addEllipse(206, 101, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e7);
-    QGraphicsEllipseItem *e8=scene->addEllipse(207, 100, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e8);
-    QGraphicsEllipseItem *e9=scene->addEllipse(199, 99, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e9);
-    QGraphicsEllipseItem *e10=scene->addEllipse(198, 98, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e10);
-    QGraphicsEllipseItem *e11=scene->addEllipse(197, 97, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e11);
-    QGraphicsEllipseItem *e12=scene->addEllipse(196, 96, 5, 5, QPen(Qt::gray), QBrush(Qt::gray));
-    wall.append(e12);*/
+    for(float i=96; i<134; i=i+4)
+        wall->addWallPoint(scene, 200, i-20);
     timer->start(5);
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
@@ -217,11 +185,9 @@ qreal getAngle(QPointF p1, QPointF p2)
 {
     QPointF point = p1;
     QPointF center = p2;
-
     qreal tgAngle = 0;
     qreal deg = 0;
     qreal k = 0;
-
     qreal x1 = ceil(center.x());
     qreal y1 = ceil(center.y());
     qreal x2 = ceil(point.x());
@@ -246,6 +212,16 @@ qreal getAngle(QPointF p1, QPointF p2)
     if((x2 < x1) && (y2 <= y1)) k = 270;
     if((x2 < x1) && (y2 >= y1)) k = 270;
     return -(deg - k);
+}
+qreal getAngle(QPointF BallPos, QPointF WallPos, double dir)
+{
+    double alpha=(qAtan(fabs(WallPos.y()-BallPos.y())/fabs(WallPos.x()-BallPos.x()))* 180)/M_PI;
+    double beta=qAcos(qCos(alpha*M_PI/180)*qCos(dir*M_PI/180)+qSin(alpha*M_PI/180)*qSin(dir*M_PI/180));
+    beta=beta*180/M_PI;
+    if(fabs(beta)>90)
+        return dir;
+    double gamma=alpha-dir;
+    return dir+180+2*gamma;
 }
 void MyQGraphicsView::Completed()
 {
@@ -297,7 +273,22 @@ void MyQGraphicsView::slot_timerOut()
     {
         if(ball->collidesWithItem(wall->getWallPoint(i)))
         {
-            qreal angle = getAngle(ball->pos(), wall->getWallPoint(i)->pos());
+            float Ballx=ball->pos().x();
+            float Bally=ball->pos().y();
+            float min=1000000;
+            QPointF NearestPoint;
+            for(int j=0; j<wall->getWallLength(); j++)
+            {
+                float Wallx=wall->getWallPointCenter(j).x();
+                float Wally=wall->getWallPointCenter(j).y();
+                float distance=qSqrt((Ballx-Wallx)*(Ballx-Wallx)+(Bally-Wally)*(Bally-Wally));
+                if(distance<min)
+                {
+                    min=distance;
+                    NearestPoint=wall->getWallPointCenter(j);
+                }
+            }
+            qreal angle = getAngle(ball->pos(), NearestPoint, ball->getDir());
             ball->setDir(angle);
         }
     }

@@ -3,6 +3,10 @@
 Ball::Ball(QPointF start_pos, double direction)
 {
     this->start_pos=start_pos;
+    while(direction>=360)
+        direction=direction-360;
+    while(direction<0)
+        direction=direction+360;
     this->dir=direction;
     this->setPos(start_pos);
 }
@@ -51,6 +55,10 @@ double Ball::getDir()
 }
 void Ball::setDir(double dir)
 {
+    while(dir>=360)
+        dir=dir-360;
+    while(dir<0)
+        dir=dir+360;
     this->dir=dir;
     start_pos = this->pos();
     meliage=1;

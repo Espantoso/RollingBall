@@ -14,6 +14,10 @@ int Wall::getWallLength()//возвращает длину вектора wall
 {
     return wall.length();
 }
+QPointF Wall::getWallPointCenter(int i)
+{
+    return QPointF(wall.at(i)->x, wall.at(i)->y);
+}
 QGraphicsEllipseItem *Wall::getWallPoint(int i)
 {
     return wall.at(i)->wall_point;
