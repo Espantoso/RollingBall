@@ -46,7 +46,6 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     wall->clear(scene);//Линия, которую должен добавлять пользователь(добавлена для тестирования)
     for(float i=96; i<134; i=i+4)
         wall->addWallPoint(scene, 200, i-20);
-    timer->start(5);
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
@@ -139,6 +138,10 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             MainMenu(scene, this);
         }
     }
+	else
+	{
+		wall->addWallPoint(scene, pt.x(), pt.y());
+	}
 }
 void PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
@@ -180,6 +183,11 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
         isInPauseMenu=true;
         PauseMenu(scene, this);
     }
+
+	if (key==Qt::Key_Space)
+	{
+		timer->start(5);
+	}
 }
 qreal getAngle(QPointF p1, QPointF p2)
 {
