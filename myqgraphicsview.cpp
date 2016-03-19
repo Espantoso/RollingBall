@@ -23,6 +23,7 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     isInMenu=false;
     delete scene;
     scene = new QGraphicsScene;
+    this->scene=scene;
     scene->setSceneRect(0, 0, 500, 500);
     graphicsView->setScene(scene);
     //scene->setBackgroundBrush(Qt::black);
@@ -35,7 +36,8 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     if(!timer)
         timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(slot_timerOut()), Qt::UniqueConnection);
-    ball=new Ball(QPointF(100, 100), 0);
+    delete ball;
+    ball=new Ball(QPointF(100, 100), 270+45);
     connect(this, SIGNAL(signal_moveToNextPosition()), ball, SLOT(slot_moveToNextPosition()));
     scene->addItem(ball);
     lineLeft = scene->addLine(0, 0, 0, 500);
@@ -43,9 +45,11 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     lineTop = scene->addLine(0, 0, 500, 0);
     lineBottom = scene->addLine(0, 500, 500, 500);
     finish=scene->addRect(200, 400, 50, 50, QPen(Qt::green), QBrush(Qt::green));
-    wall->clear(scene);//Линия, которую должен добавлять пользователь(добавлена для тестирования)
-    for(float i=96; i<134; i=i+4)
-        wall->addWallPoint(scene, 200, i-20);
+    wall->clear(scene);
+    for(float i=96; i<134; i=i+2)//Линия, которую должен добавлять пользователь(добавлена для тестирования)
+        wall->addWallPoint(scene, 200, i+40);
+    for(float i=96; i<134; i=i+2)//Линия, которую должен добавлять пользователь(добавлена для тестирования)
+        wall->addWallPoint(scene, i-30, 200);
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
@@ -186,50 +190,8 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
 
 	if (key==Qt::Key_Space)
 	{
-		timer->start(5);
+        timer->start(5);
 	}
-}
-qreal getAngle(QPointF p1, QPointF p2)
-{
-    QPointF point = p1;
-    QPointF center = p2;
-    qreal tgAngle = 0;
-    qreal deg = 0;
-    qreal k = 0;
-    qreal x1 = ceil(center.x());
-    qreal y1 = ceil(center.y());
-    qreal x2 = ceil(point.x());
-    qreal y2 = ceil(point.y());
-
-    if(x1 == x2)
-    {
-        if(y2 > y1) deg = 0;
-        if(y2 <= y1) deg = 180;
-    }
-    else
-    {
-        tgAngle = qAtan((y2 - y1)/(x2 - x1));
-        deg = (tgAngle * 180)/M_PI;
-    }
-
-    if(deg < 0) deg = 360 + deg;
-    if(deg > 360) deg = deg - 360;
-
-    if((x2 > x1) && (y2 >= y1)) k = 90;
-    if((x2 > x1) && (y2 <= y1)) k = 90;
-    if((x2 < x1) && (y2 <= y1)) k = 270;
-    if((x2 < x1) && (y2 >= y1)) k = 270;
-    return -(deg - k);
-}
-qreal getAngle(QPointF BallPos, QPointF WallPos, double dir)
-{
-    double alpha=(qAtan(fabs(WallPos.y()-BallPos.y())/fabs(WallPos.x()-BallPos.x()))* 180)/M_PI;
-    double beta=qAcos(qCos(alpha*M_PI/180)*qCos(dir*M_PI/180)+qSin(alpha*M_PI/180)*qSin(dir*M_PI/180));
-    beta=beta*180/M_PI;
-    if(fabs(beta)>90)
-        return dir;
-    double gamma=alpha-dir;
-    return dir+180+2*gamma;
 }
 void MyQGraphicsView::Completed()
 {
@@ -254,28 +216,55 @@ void MyQGraphicsView::Completed()
     MainMenu->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(MainMenu);
 }
+qreal getAngle(QPointF BallPos, QPointF WallPos, double dir)
+{
+    double alpha=(qAtan(fabs(WallPos.y()-BallPos.y())/fabs(WallPos.x()-BallPos.x()))* 180)/M_PI;
+    //double alpha=0;
+    if((WallPos.x()<BallPos.x())&&(WallPos.y()<BallPos.y()))
+        alpha=180-alpha;
+    else if((WallPos.x()<BallPos.x())&&(WallPos.y()>BallPos.y()))
+        alpha=180+alpha;
+    else if((WallPos.x()>BallPos.x())&&(WallPos.y()>BallPos.y()))
+        alpha=360-alpha;
+    double beta=qAcos(qCos(alpha*M_PI/180)*qCos(dir*M_PI/180)+qSin(alpha*M_PI/180)*qSin(dir*M_PI/180));
+    beta=beta*180/M_PI;
+    if(fabs(beta)>90)
+        return dir;
+    double gamma=alpha-dir;
+    return dir+180+2*gamma;
+}
 void MyQGraphicsView::slot_timerOut()
 {
     if(ball->collidesWithItem(finish))
         Completed();
     else if(ball->collidesWithItem(lineLeft))
     {
-        qreal angle = 90 + (90 - ball->getDir());
-        ball->setDir(angle);
+        if(!((ball->getDir()<90)||(ball->getDir()>270)))
+        {
+            qreal angle = 90 + (90 - ball->getDir());
+            ball->setDir(angle);
+        }
     }
     else if(ball->collidesWithItem(lineRight))
     {
-        qreal angle = 270 + (270 - ball->getDir());
-        ball->setDir(angle);
+        if(!((ball->getDir()>90)&&(ball->getDir()<270)))
+        {
+            qreal angle = 270 + (270 - ball->getDir());
+            ball->setDir(angle);
+        }
     }
     else if(ball->collidesWithItem(lineTop))
     {
-        ball->setDir(- ball->getDir());
+        if(!(ball->getDir()>180))
+            ball->setDir(- ball->getDir());
     }
     else if(ball->collidesWithItem(lineBottom))
     {
-        qreal angle = 180 + (180 - ball->getDir());
-        ball->setDir(angle);
+        if(!(ball->getDir()<180))
+        {
+            qreal angle = 180 + (180 - ball->getDir());
+            ball->setDir(angle);
+        }
     }
     for(int i = 0; i < wall->getWallLength(); i++)
     {

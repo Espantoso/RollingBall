@@ -33,10 +33,10 @@ QGraphicsEllipseItem *Wall::getWallPoint(double x, double y)
 }
 void Wall::clear(QGraphicsScene *scene)
 {
-    for(int i=0; i<wall.length(); i++)
+    /*for(int i=0; i<wall.length(); i++)
     {
         scene->removeItem(wall.at(i)->wall_point);
-    }
+    }*/
     wall.clear();
 }
 void Wall::deletePoint(QGraphicsScene *scene ,int i)
