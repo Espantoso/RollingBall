@@ -105,6 +105,14 @@ void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
     scene->addItem(Start);
     scene->addRect(510, 90, 30, 30, QPen(Qt::red), QBrush(Qt::gray));
     scene->addRect(550, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
+    scene->addRect(510, 140, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *RemoveAll=new QGraphicsTextItem("Remove all");
+    RemoveAll->setFont(QFont("helvetica", 12));
+    RemoveAll->setPos(405, 141);
+    RemoveAll->setTextWidth(300);
+    RemoveAll->document()->setPageSize(QSizeF(300, 50));
+    RemoveAll->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(RemoveAll);
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
