@@ -30,7 +30,7 @@ public:
 	QPointF getWallPointCenter(int i);
     QGraphicsEllipseItem *getWallPoint(int i);
     QGraphicsEllipseItem *getWallPoint(double x, double y);
-    void clear(QGraphicsScene *scene);//удалить все элементы вектора wall
+    void DeleteFromMemory(QGraphicsScene *scene);//удалить все элементы вектора wall
     void deletePoint(QGraphicsScene *scene, int i);
     void deletePoint(QGraphicsScene *scene, double x, double y);
     int Find(double x, double y);

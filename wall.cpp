@@ -31,7 +31,7 @@ QGraphicsEllipseItem *Wall::getWallPoint(double x, double y)
     }
     return nullptr;
 }
-void Wall::clear(QGraphicsScene *scene)
+void Wall::DeleteFromMemory(QGraphicsScene *scene)
 {
     /*for(int i=0; i<wall.length(); i++)
     {

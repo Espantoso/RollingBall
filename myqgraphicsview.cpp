@@ -16,10 +16,30 @@ QGraphicsLineItem *lineBottom;
 QGraphicsScene *GameScene;
 QTimer *timer=nullptr;
 QGraphicsRectItem *finish;
-Wall *wall=new Wall(5, Qt::gray);
-bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false;
+const float WallWidth=5, DistBetweenWallEl=3, BallR=20;
+float PrevPointX=-100, PrevPointY;
+QPointF BallStartPos=QPointF(100, 100);
+float BallStartDir=270+45;
+Wall *wall=new Wall(WallWidth, Qt::gray);
+bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false, LeftButtonDown=false;
+bool isTimeLaunched, AddMode;
+void LaunchTime(QGraphicsScene *scene)
+{
+    timer->start(5);
+    isTimeLaunched=true;
+    scene->addRect(510, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *Restart=new QGraphicsTextItem("Restart");
+    Restart->setFont(QFont("helvetica", 20));
+    Restart->setPos(407, 45);
+    Restart->setTextWidth(300);
+    Restart->document()->setPageSize(QSizeF(300, 50));
+    Restart->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(Restart);
+    scene->addRect(510, 90, 200, 500, QPen(Qt::white), QBrush(Qt::white));
+}
 void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
+    AddMode=true;
     isInMenu=false;
     delete scene;
     scene = new QGraphicsScene;
@@ -36,8 +56,7 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     if(!timer)
         timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(slot_timerOut()), Qt::UniqueConnection);
-    delete ball;
-    ball=new Ball(QPointF(100, 100), 270+45);
+    ball=new Ball(BallStartPos, BallStartDir);
     connect(this, SIGNAL(signal_moveToNextPosition()), ball, SLOT(slot_moveToNextPosition()));
     scene->addItem(ball);
     lineLeft = scene->addLine(0, 0, 0, 500);
@@ -45,14 +64,51 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     lineTop = scene->addLine(0, 0, 500, 0);
     lineBottom = scene->addLine(0, 500, 500, 500);
     finish=scene->addRect(200, 400, 50, 50, QPen(Qt::green), QBrush(Qt::green));
-    wall->clear(scene);
-    for(float i=96; i<134; i=i+2)//Линия, которую должен добавлять пользователь(добавлена для тестирования)
+    wall->DeleteFromMemory(scene);
+    /*for(float i=96; i<134; i=i+DistBetweenWallEl)//Линия, которую должен добавлять пользователь(добавлена для тестирования)
         wall->addWallPoint(scene, 200, i+40);
-    for(float i=96; i<134; i=i+2)//Линия, которую должен добавлять пользователь(добавлена для тестирования)
-        wall->addWallPoint(scene, i-30, 200);
+    for(float i=96; i<134; i=i+DistBetweenWallEl)//Линия, которую должен добавлять пользователь(добавлена для тестирования)
+        wall->addWallPoint(scene, i-30, 200);*/
+    scene->addRect(510, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *Start=new QGraphicsTextItem("Start");
+    Start->setFont(QFont("helvetica", 20));
+    Start->setPos(395, 45);
+    Start->setTextWidth(300);
+    Start->document()->setPageSize(QSizeF(300, 50));
+    Start->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(Start);
+    scene->addRect(510, 90, 30, 30, QPen(Qt::red), QBrush(Qt::gray));
+    scene->addRect(550, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
+    scene->addRect(510, 140, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *RemoveAll=new QGraphicsTextItem("Remove all");
+    RemoveAll->setFont(QFont("helvetica", 12));
+    RemoveAll->setPos(405, 141);
+    RemoveAll->setTextWidth(300);
+    RemoveAll->document()->setPageSize(QSizeF(300, 50));
+    RemoveAll->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(RemoveAll);
+}
+void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
+{
+    isInMenu=false;
+    isTimeLaunched=false;
+    timer->stop();
+    ball->setPos(BallStartPos);
+    ball->setDir(BallStartDir);
+    scene->addRect(510, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *Start=new QGraphicsTextItem("Start");
+    Start->setFont(QFont("helvetica", 20));
+    Start->setPos(395, 45);
+    Start->setTextWidth(300);
+    Start->document()->setPageSize(QSizeF(300, 50));
+    Start->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(Start);
+    scene->addRect(510, 90, 30, 30, QPen(Qt::red), QBrush(Qt::gray));
+    scene->addRect(550, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
+    isTimeLaunched=false;
     delete scene;
     scene = new QGraphicsScene;
     graphicsView->setScene(scene);
@@ -96,16 +152,24 @@ void MyQGraphicsView::BackToGame(QGraphicsScene *scene, QGraphicsView *graphicsV
             str_field[i][j]="empty";
     Field field(str_field, PLANE_WIDTH, PLANE_HEIGHT);*/
     //field.draw(500, 550, scene);
-    if(!timer)
-        timer = new QTimer(this);
-    timer->start(5);
-    lineLeft = scene->addLine(0, 0, 0, 500);
-    lineRight = scene->addLine(500, 0, 500, 500);
-    lineTop = scene->addLine(0, 0, 500, 0);
-    lineBottom = scene->addLine(0, 500, 500, 500);
+    if(isTimeLaunched)
+        timer->start(5);
+}
+void SelectAddWallTool(QGraphicsScene *scene)
+{
+    AddMode=true;
+    scene->addRect(510, 90, 30, 30, QPen(Qt::red), QBrush(Qt::gray));
+    scene->addRect(550, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
+}
+void SelectRemoveWallTool(QGraphicsScene *scene)
+{
+    AddMode=false;
+    scene->addRect(510, 90, 30, 30, QPen(Qt::black), QBrush(Qt::gray));
+    scene->addRect(550, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
 }
 void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
 {
+    LeftButtonDown=true;
     QPointF pt = mapToScene(e->pos());
     if(isInMainMenu)
     {
@@ -142,10 +206,198 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             MainMenu(scene, this);
         }
     }
-	else
-	{
-		wall->addWallPoint(scene, pt.x(), pt.y());
+    else if(isTimeLaunched)
+    {
+        if((pt.x()>510)&&(pt.x()<605)&&(pt.y()>50)&&(pt.y()<80))
+        {
+            RestartGame(scene, this);
+        }
+    }
+    else
+    {
+        if((pt.x()>510)&&(pt.x()<605)&&(pt.y()>50)&&(pt.y()<80))
+        {
+            LaunchTime(scene);
+            return;
+        }
+        else if((pt.x()>510)&&(pt.x()<540)&&(pt.y()>90)&&(pt.y()<120))
+        {
+            SelectAddWallTool(scene);
+            return;
+        }
+        else if((pt.x()>550)&&(pt.x()<580)&&(pt.y()>90)&&(pt.y()<120))
+        {
+            SelectRemoveWallTool(scene);
+            return;
+        }
+        else if((pt.x()>510)&&(pt.x()<605)&&(pt.y()>140)&&(pt.y()<170))
+        {
+            for(int j=0; j<wall->getWallLength();)
+            {
+                wall->deletePoint(scene, j);
+            }
+            return;
+        }
+        if(AddMode)
+        {
+            float distance;
+            for(int j=0; j<wall->getWallLength(); j++)
+            {
+                float Wallx=wall->getWallPointCenter(j).x();
+                float Wally=wall->getWallPointCenter(j).y();
+                distance=qSqrt((pt.x()-Wallx)*(pt.x()-Wallx)+(pt.y()-Wally)*(pt.y()-Wally));
+                if(distance<DistBetweenWallEl)
+                    return;
+            }
+            float BallX=ball->pos().x(), BallY=ball->pos().y();
+            distance=qSqrt((pt.x()-BallX)*(pt.x()-BallX)+(pt.y()-BallY)*(pt.y()-BallY));
+            if(distance<BallR)
+                return;
+            PrevPointX=pt.x();
+            PrevPointY=pt.y();
+            if((pt.x()>500-WallWidth)||(pt.x()<WallWidth)||(pt.y()>500-WallWidth)||(pt.y()<WallWidth))
+                return;
+            wall->addWallPoint(scene, pt.x(), pt.y());
+        }
+        else
+        {
+            float distance;
+            for(int j=0; j<wall->getWallLength(); j++)
+            {
+                float Wallx=wall->getWallPointCenter(j).x();
+                float Wally=wall->getWallPointCenter(j).y();
+                distance=qSqrt((pt.x()-Wallx)*(pt.x()-Wallx)+(pt.y()-Wally)*(pt.y()-Wally));
+                if(distance<2*WallWidth)
+                    wall->deletePoint(scene, j);
+            }
+        }
 	}
+}
+void MyQGraphicsView::mouseReleaseEvent(QMouseEvent *e)
+{
+    PrevPointX=-100;
+    LeftButtonDown=false;
+}
+void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
+{
+    QPointF pt = mapToScene(e->pos());
+    if((!isInMenu)&&(!isTimeLaunched)&&(AddMode))
+    {
+        float BallX=ball->pos().x(), BallY=ball->pos().y();
+        float distance=qSqrt((pt.x()-BallX)*(pt.x()-BallX)+(pt.y()-BallY)*(pt.y()-BallY));
+        if(distance<1.5*BallR)
+            return;
+        if((pt.x()>500-WallWidth)||(pt.x()<WallWidth)||(pt.y()>500-WallWidth)||(pt.y()<WallWidth))
+            return;
+        if(LeftButtonDown)
+        {
+            float distance=qSqrt((pt.x()-PrevPointX)*(pt.x()-PrevPointX)+(pt.y()-PrevPointY)*(pt.y()-PrevPointY));
+            if((distance>DistBetweenWallEl)&&(PrevPointX>0))
+            {
+                double k=fabs(PrevPointY-pt.y())/fabs(PrevPointX-pt.x());
+                if(k<=1)
+                {
+                    float x0=PrevPointX<pt.x()?PrevPointX:pt.x(), y0, x1, y1;
+                    if(x0==pt.x())
+                    {
+                        y0=pt.y();
+                        x0=pt.x();
+                        y1=PrevPointY;
+                        x1=PrevPointX;
+                    }
+                    else
+                    {
+                        y0=PrevPointY;
+                        x0=PrevPointX;
+                        y1=pt.y();
+                        x1=pt.x();
+                    }
+                    if(y1<y0)
+                        k=-k;
+                    float steep=DistBetweenWallEl*cos(qAtan(k));
+                    for(float i=x0; i<x1; i=i+steep)
+                    {
+                        float BallX=ball->pos().x(), BallY=ball->pos().y(), x=i, y=k*(i-x0)+y0;
+                        float distance=qSqrt((x-BallX)*(x-BallX)+(y-BallY)*(y-BallY));
+                        if(distance<1.5*BallR)
+                        {
+                            PrevPointX=-100;
+                            return;
+                        }
+                        if((x>500-WallWidth)||(x<WallWidth)||(y>500-WallWidth)||(y<WallWidth))
+                        {
+                            PrevPointX=-100;
+                            return;
+                        }
+                        wall->addWallPoint(scene, x, y);
+                    }
+                }
+                else
+                {
+                    float y0=PrevPointY<pt.y()?PrevPointY:pt.y(), x0, y1, x1;
+                    if(y0==pt.y())
+                    {
+                        y0=pt.y();
+                        x0=pt.x();
+                        y1=PrevPointY;
+                        x1=PrevPointX;
+                    }
+                    else
+                    {
+                        y0=PrevPointY;
+                        x0=PrevPointX;
+                        y1=pt.y();
+                        x1=pt.x();
+                    }
+                    if(x1<x0)
+                        k=-k;
+                    float steep=DistBetweenWallEl*cos(qAtan(1/k));
+                    for(float i=y0; i<y1; i=i+steep)
+                    {
+                        float BallX=ball->pos().x(), BallY=ball->pos().y(), x=(1/k)*(i-y0)+x0, y=i;
+                        float distance=qSqrt((x-BallX)*(x+x0-BallX)+(y-BallY)*(y-BallY));
+                        if(distance<1.5*BallR)
+                        {
+                            PrevPointX=-100;
+                            return;
+                        }
+                        if((x>500-WallWidth)||(x<WallWidth)||(y>500-WallWidth)||(y<WallWidth))
+                        {
+                            PrevPointX=-100;
+                            return;
+                        }
+                        wall->addWallPoint(scene, x, y);
+                    }
+                }
+            }
+            PrevPointX=pt.x();
+            PrevPointY=pt.y();
+            for(int j=0; j<wall->getWallLength(); j++)
+            {
+                float Wallx=wall->getWallPointCenter(j).x();
+                float Wally=wall->getWallPointCenter(j).y();
+                distance=qSqrt((pt.x()-Wallx)*(pt.x()-Wallx)+(pt.y()-Wally)*(pt.y()-Wally));
+                if(distance<DistBetweenWallEl)
+                    return;
+            }
+            wall->addWallPoint(scene, pt.x(), pt.y());
+        }
+    }
+    else if((!isInMenu)&&(!isTimeLaunched)&&(!AddMode))
+    {
+        if(LeftButtonDown)
+        {
+            float distance;
+            for(int j=0; j<wall->getWallLength(); j++)
+            {
+                float Wallx=wall->getWallPointCenter(j).x();
+                float Wally=wall->getWallPointCenter(j).y();
+                distance=qSqrt((pt.x()-Wallx)*(pt.x()-Wallx)+(pt.y()-Wally)*(pt.y()-Wally));
+                if(distance<2*WallWidth)
+                    wall->deletePoint(scene, j);
+            }
+        }
+    }
 }
 void PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
@@ -187,11 +439,8 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
         isInPauseMenu=true;
         PauseMenu(scene, this);
     }
-
 	if (key==Qt::Key_Space)
-	{
-        timer->start(5);
-	}
+        LaunchTime(scene);
 }
 void MyQGraphicsView::Completed()
 {
@@ -219,7 +468,6 @@ void MyQGraphicsView::Completed()
 qreal getAngle(QPointF BallPos, QPointF WallPos, double dir)
 {
     double alpha=(qAtan(fabs(WallPos.y()-BallPos.y())/fabs(WallPos.x()-BallPos.x()))* 180)/M_PI;
-    //double alpha=0;
     if((WallPos.x()<BallPos.x())&&(WallPos.y()<BallPos.y()))
         alpha=180-alpha;
     else if((WallPos.x()<BallPos.x())&&(WallPos.y()>BallPos.y()))
