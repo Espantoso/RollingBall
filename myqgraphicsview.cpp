@@ -270,6 +270,8 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
         else
         {
             float distance;
+            for(int i=0; i<5; i++)
+            {
             for(int j=0; j<wall->getWallLength(); j++)
             {
                 float Wallx=wall->getWallPointCenter(j).x();
@@ -277,6 +279,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
                 distance=qSqrt((pt.x()-Wallx)*(pt.x()-Wallx)+(pt.y()-Wally)*(pt.y()-Wally));
                 if(distance<2*WallWidth)
                     wall->deletePoint(scene, j);
+            }
             }
         }
 	}
