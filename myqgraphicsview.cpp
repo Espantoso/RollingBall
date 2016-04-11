@@ -27,7 +27,7 @@ QPointF BallStartPos=QPointF(100, 100);
 float BallStartDir=270+45;
 Wall *wall=new Wall(WallWidth, Qt::gray);
 bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false, LeftButtonDown=false;
-bool isTimeLaunched, AddMode, isInChooseLevelMenu=false;
+bool isTimeLaunched, AddMode, isInChooseLevelMenu=false, isLevelListLoaded=false;
 QVector <QByteArray> level_names;
 class LevelListCreator:public QThread
 {
@@ -45,12 +45,15 @@ public:
                 file.close();
             }
             else
+            {
+                isLevelListLoaded=true;
                 break;
+            }
             i++;
         }
     }
 };
-class LevelListDrawer:public QThread
+/*class LevelListDrawer:public QThread
 {
 private:
     QGraphicsScene* scene;
@@ -62,6 +65,9 @@ public:
     void run()
     {
         int start=0;
+        QGraphicsTextItem *LevelName=new QGraphicsTextItem("212");
+        //QGraphicsTextItem *LevelName=new QGraphicsTextItem(level_names.at(i));
+        //LevelName->setPlainText("212");
         while(isInChooseLevelMenu)
         {
             int length=level_names.length();
@@ -70,16 +76,36 @@ public:
                 if(i%2==0)
                 {
                     scene->addRect(0, 50*i, 200, 50, QPen(Qt::gray), QBrush(Qt::gray));
+                    std::cout<<i;
+                    std::cout<<"\n";
+                    std::cout.flush();
+                    //LevelName->setPlainText("S");
+                    //delete LevelName;
+                    //LevelName->setFont(QFont("helvetica", 20));
+                    //LevelName->setPos(0, 50*i);
+                    //LevelName->setTextWidth(200);
+                    //LevelName->document()->setPageSize(QSizeF(200, 50));
+                    //LevelName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+                    //scene->addItem(LevelName);
+                    //delete LevelName;
                 }
                 else
                 {
                     scene->addRect(300, 50*(i-1), 200, 50, QPen(Qt::gray), QBrush(Qt::gray));
+                    /*QGraphicsTextItem *LevelName=new QGraphicsTextItem(level_names.at(i));
+                    LevelName->setFont(QFont("helvetica", 20));
+                    LevelName->setPos(300, 50*(i-1));
+                    LevelName->setTextWidth(200);
+                    LevelName->document()->setPageSize(QSizeF(300, 50));
+                    LevelName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+                    scene->addItem(LevelName);
+                    delete LevelName;
                 }
             }
             start=length;
         }
     }
-};
+};*/
 void LaunchTime(QGraphicsScene *scene)
 {
     timer->start(5);
@@ -141,8 +167,39 @@ void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphics
     this->scene=scene;
     scene->setSceneRect(0, 0, 500, 500);
     graphicsView->setScene(scene);
-    LevelListDrawer *level_list_drawer=new LevelListDrawer(scene);
-    level_list_drawer->start();
+    int start=0;
+    do
+    {
+        int length=level_names.length();
+        for(int i=start; i<length; i++)
+        {
+            if(i%2==0)
+            {
+                scene->addRect(0, 50*i, 200, 50, QPen(Qt::gray), QBrush(Qt::gray));
+                QGraphicsTextItem *LevelName=new QGraphicsTextItem();
+                LevelName->setPlainText(level_names.at(i));
+                LevelName->setFont(QFont("helvetica", 20));
+                LevelName->setPos(0, 3+50*i);
+                LevelName->setTextWidth(200);
+                LevelName->document()->setPageSize(QSizeF(200, 50));
+                LevelName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+                scene->addItem(LevelName);
+            }
+            else
+            {
+                QGraphicsTextItem *LevelName=new QGraphicsTextItem();
+                scene->addRect(300, 50*(i-1), 200, 50, QPen(Qt::gray), QBrush(Qt::gray));
+                LevelName->setPlainText(level_names.at(i));
+                LevelName->setFont(QFont("helvetica", 20));
+                LevelName->setPos(300, 3+50*(i-1));
+                LevelName->setTextWidth(200);
+                LevelName->document()->setPageSize(QSizeF(200, 50));
+                LevelName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+                scene->addItem(LevelName);
+            }
+        }
+        start=length;
+    }while((isInChooseLevelMenu)&&(!isLevelListLoaded));
 }
 void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
@@ -188,14 +245,14 @@ void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
     scene->addRect(0, 50, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     scene->addRect(0, -50, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *StartGame=new QGraphicsTextItem("Choose level");
-	StartGame->setFont(QFont("helvetica", 20));
+    StartGame->setFont(QFont("helvetica", 20));
     StartGame->setPos(0, -50);
     StartGame->setTextWidth(300);
     StartGame->document()->setPageSize(QSizeF(300, 50));
     StartGame->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(StartGame);
-	QGraphicsTextItem *Quit=new QGraphicsTextItem("Exit");
-	Quit->setFont(QFont("helvetica", 20));
+    QGraphicsTextItem *Quit=new QGraphicsTextItem("Exit");
+    Quit->setFont(QFont("helvetica", 20));
     Quit->setPos(0, 50);
     Quit->setTextWidth(300);
     Quit->document()->setPageSize(QSizeF(300, 50));
@@ -349,7 +406,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             }
             }
         }
-	}
+    }
 }
 void MyQGraphicsView::mouseReleaseEvent(QMouseEvent *e)
 {
@@ -486,22 +543,22 @@ void PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
     scene->addRect(0, -125, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     scene->addRect(0, -25, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     scene->addRect(0, 75, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
-	QGraphicsTextItem *ReturnToGame=new QGraphicsTextItem("Back to game");
-	ReturnToGame->setFont(QFont("helvetica", 20));
+    QGraphicsTextItem *ReturnToGame=new QGraphicsTextItem("Back to game");
+    ReturnToGame->setFont(QFont("helvetica", 20));
     ReturnToGame->setPos(0, -125);
     ReturnToGame->setTextWidth(300);
     ReturnToGame->document()->setPageSize(QSizeF(300, 50));
     ReturnToGame->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(ReturnToGame);
-	QGraphicsTextItem *MainMenu=new QGraphicsTextItem("Main menu");
-	MainMenu->setFont(QFont("helvetica", 20));
+    QGraphicsTextItem *MainMenu=new QGraphicsTextItem("Main menu");
+    MainMenu->setFont(QFont("helvetica", 20));
     MainMenu->setPos(0, -25);
     MainMenu->setTextWidth(300);
     MainMenu->document()->setPageSize(QSizeF(300, 50));
     MainMenu->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(MainMenu);
-	QGraphicsTextItem *Quit=new QGraphicsTextItem("Exit");
-	Quit->setFont(QFont("helvetica", 20));
+    QGraphicsTextItem *Quit=new QGraphicsTextItem("Exit");
+    Quit->setFont(QFont("helvetica", 20));
     Quit->setPos(0, 75);
     Quit->setTextWidth(300);
     Quit->document()->setPageSize(QSizeF(300, 50));
@@ -517,7 +574,7 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
         isInPauseMenu=true;
         PauseMenu(scene, this);
     }
-	if (key==Qt::Key_Space)
+    if (key==Qt::Key_Space)
         LaunchTime(scene);
 }
 void MyQGraphicsView::Completed()
