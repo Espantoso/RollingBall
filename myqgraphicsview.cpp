@@ -29,6 +29,7 @@ Wall *wall=new Wall(WallWidth, Qt::gray);
 bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false, LeftButtonDown=false;
 bool isTimeLaunched, AddMode, isInChooseLevelMenu=false, isLevelListLoaded=false;
 QVector <QByteArray> level_names;
+int levels_number_on_inset;
 class LevelListCreator:public QThread
 {
 public:
@@ -120,7 +121,7 @@ void LaunchTime(QGraphicsScene *scene)
     scene->addItem(Restart);
     scene->addRect(510, 90, 200, 500, QPen(Qt::white), QBrush(Qt::white));
 }
-void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
+void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView, QFile *file)
 {
     AddMode=true;
     isInMenu=false;
@@ -129,6 +130,28 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     this->scene=scene;
     scene->setSceneRect(0, 0, 500, 500);
     graphicsView->setScene(scene);
+    if(file->open(QIODevice::ReadOnly))//вывод настроек уровня на экран для тестирования
+    {
+        QByteArray level_name=file->readAll();
+        QGraphicsTextItem *RemoveAl=new QGraphicsTextItem(level_name);
+        RemoveAl->setFont(QFont("helvetica", 12));
+        RemoveAl->setPos(405, 200);
+        RemoveAl->setTextWidth(300);
+        RemoveAl->document()->setPageSize(QSizeF(300, 50));
+        RemoveAl->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+        scene->addItem(RemoveAl);
+        file->close();
+    }
+    else
+    {
+        QGraphicsTextItem *RemoveAll=new QGraphicsTextItem("Error: level file was missed");
+        RemoveAll->setFont(QFont("helvetica", 12));
+        RemoveAll->setPos(100, 0);
+        RemoveAll->setTextWidth(300);
+        RemoveAll->document()->setPageSize(QSizeF(300, 50));
+        RemoveAll->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+        scene->addItem(RemoveAll);
+    }
     if(!timer)
         timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(slot_timerOut()), Qt::UniqueConnection);
@@ -171,6 +194,7 @@ void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphics
     do
     {
         int length=level_names.length();
+        levels_number_on_inset=length;
         for(int i=start; i<length; i++)
         {
             if(i%2==0)
@@ -235,7 +259,8 @@ void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
         file=new QFile(QString("levels/level")+QString::number(i)+QString(".txt"));
         file->open(QIODevice::WriteOnly | QIODevice::Text);
         QTextStream writeStream(file);
-        writeStream << "level "+QString::number(i); // Посылаем строку в поток для записи
+        writeStream << "level "+QString::number(i)+"\n"; // Посылаем строку в поток для записи
+        writeStream << "level settings";
         file->close();
     }*/
     isTimeLaunched=false;
@@ -345,7 +370,25 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             RestartGame(scene, this);
         }
     }
-    else
+    else if(isInChooseLevelMenu)
+    {
+        for(int i=0; i<levels_number_on_inset; i++)
+        {
+            if((i%2==0)&&(pt.x()>0)&&(pt.x()<200)&&(pt.y()>50*i)&&(pt.y()<50*i+50))
+            {
+                isInChooseLevelMenu=false;
+                QFile *file=new QFile(QString("levels/level")+QString::number(i+1)+QString(".txt"));
+                StartGame(scene, this, file);
+            }
+            if((i%2==1)&&(pt.x()>300)&&(pt.x()<500)&&(pt.y()>50*(i-1))&&(pt.y()<50*(i-1)+50))
+            {
+                isInChooseLevelMenu=false;
+                QFile *file=new QFile(QString("levels/level")+QString::number(i+1)+QString(".txt"));
+                StartGame(scene, this, file);
+            }
+        }
+    }
+    else//уровень
     {
         if((pt.x()>510)&&(pt.x()<605)&&(pt.y()>50)&&(pt.y()<80))
         {
@@ -396,14 +439,14 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             float distance;
             for(int i=0; i<5; i++)
             {
-            for(int j=0; j<wall->getWallLength(); j++)
-            {
-                float Wallx=wall->getWallPointCenter(j).x();
-                float Wally=wall->getWallPointCenter(j).y();
-                distance=qSqrt((pt.x()-Wallx)*(pt.x()-Wallx)+(pt.y()-Wally)*(pt.y()-Wally));
-                if(distance<2*WallWidth)
-                    wall->deletePoint(scene, j);
-            }
+                for(int j=0; j<wall->getWallLength(); j++)
+                {
+                    float Wallx=wall->getWallPointCenter(j).x();
+                    float Wally=wall->getWallPointCenter(j).y();
+                    distance=qSqrt((pt.x()-Wallx)*(pt.x()-Wallx)+(pt.y()-Wally)*(pt.y()-Wally));
+                    if(distance<2*WallWidth)
+                        wall->deletePoint(scene, j);
+                }
             }
         }
     }

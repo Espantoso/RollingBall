@@ -14,7 +14,7 @@ class MyQGraphicsView : public QGraphicsView
 public:
     explicit MyQGraphicsView(QWidget *parent = 0);
     QGraphicsScene *scene;
-    void StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
+    void StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView, QFile *file);
     void ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void BackToGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void Completed();
