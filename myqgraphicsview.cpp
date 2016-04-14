@@ -13,6 +13,7 @@
 #include <QThread>
 #include <QString>
 #include <QTextStream>
+#include <QSemaphore>
 Ball *ball;
 QGraphicsLineItem *lineLeft;
 QGraphicsLineItem *lineRight;
@@ -29,7 +30,7 @@ Wall *wall=new Wall(WallWidth, Qt::gray);
 bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false, LeftButtonDown=false;
 bool isTimeLaunched, AddMode, isInChooseLevelMenu=false, isLevelListLoaded=false;
 QVector <QByteArray> level_names;
-int levels_number_on_inset;
+int levels_number_on_inset, inset_number, cur_inset=1;
 class LevelListCreator:public QThread
 {
 public:
@@ -42,7 +43,13 @@ public:
             if(file.open(QIODevice::ReadOnly))
             {
                 QByteArray level_name=file.readLine();
+                //почему-то иногда название уровня не считывается
+                //для исправления этого нужен этот цикл с кодом первой буквы названия уровня
+                while(level_name.data()[0]!=108)//108 - код буквы l
+                    level_name=file.readLine();//прочитаем название уровня ещё раз
+                QSemaphore sem(1);
                 level_names.append(level_name);
+                sem.acquire(1);
                 file.close();
             }
             else
@@ -132,25 +139,25 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     graphicsView->setScene(scene);
     if(file->open(QIODevice::ReadOnly))//вывод настроек уровня на экран для тестирования
     {
-        QByteArray level_name=file->readAll();
-        QGraphicsTextItem *RemoveAl=new QGraphicsTextItem(level_name);
-        RemoveAl->setFont(QFont("helvetica", 12));
-        RemoveAl->setPos(405, 200);
-        RemoveAl->setTextWidth(300);
-        RemoveAl->document()->setPageSize(QSizeF(300, 50));
-        RemoveAl->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-        scene->addItem(RemoveAl);
+        QByteArray level_properties=file->readAll();
+        QGraphicsTextItem *Levelprp=new QGraphicsTextItem(level_properties);
+        Levelprp->setFont(QFont("helvetica", 12));
+        Levelprp->setPos(405, 200);
+        Levelprp->setTextWidth(300);
+        Levelprp->document()->setPageSize(QSizeF(300, 50));
+        Levelprp->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+        scene->addItem(Levelprp);
         file->close();
     }
     else
     {
-        QGraphicsTextItem *RemoveAll=new QGraphicsTextItem("Error: level file was missed");
-        RemoveAll->setFont(QFont("helvetica", 12));
-        RemoveAll->setPos(100, 0);
-        RemoveAll->setTextWidth(300);
-        RemoveAll->document()->setPageSize(QSizeF(300, 50));
-        RemoveAll->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-        scene->addItem(RemoveAll);
+        QGraphicsTextItem *Error=new QGraphicsTextItem("Error: level file was missed");
+        Error->setFont(QFont("helvetica", 12));
+        Error->setPos(100, 0);
+        Error->setTextWidth(300);
+        Error->document()->setPageSize(QSizeF(300, 50));
+        Error->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+        scene->addItem(Error);
     }
     if(!timer)
         timer = new QTimer(this);
@@ -190,14 +197,44 @@ void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphics
     this->scene=scene;
     scene->setSceneRect(0, 0, 500, 500);
     graphicsView->setScene(scene);
+    QGraphicsTextItem *Back=new QGraphicsTextItem();
+    scene->addRect(-100, 500, 200, 50, QPen(Qt::gray), QBrush(Qt::gray));
+    Back->setPlainText("Back");
+    Back->setFont(QFont("helvetica", 20));
+    Back->setPos(-100, 505);
+    Back->setTextWidth(200);
+    Back->document()->setPageSize(QSizeF(200, 50));
+    Back->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(Back);
     int start=0;
+    inset_number=0;
     do
     {
         int length=level_names.length();
-        levels_number_on_inset=length;
+        if(length<=10)
+            levels_number_on_inset=length;
+        else
+            levels_number_on_inset=10;
+        while(inset_number<length/10+1)
+        {
+            inset_number++;
+            QGraphicsTextItem *InsetName=new QGraphicsTextItem();
+            InsetName->setPlainText(QString::number(inset_number*10-9)+"-"+QString::number(inset_number*10));
+            if(inset_number==1)
+                InsetName->setFont(QFont("helvetica", 11, QFont::Bold));
+            else
+                InsetName->setFont(QFont("helvetica", 10));
+            InsetName->setPos(105+(inset_number-1)*50, 505);
+            InsetName->setTextWidth(50);
+            InsetName->document()->setPageSize(QSizeF(50, 30));
+            InsetName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+            scene->addItem(InsetName);
+        }
         for(int i=start; i<length; i++)
         {
-            if(i%2==0)
+            if(i>=10)//на вкладке 10 уровней
+                break;
+            if(i%2==0)//первый столбик
             {
                 scene->addRect(0, 50*i, 200, 50, QPen(Qt::gray), QBrush(Qt::gray));
                 QGraphicsTextItem *LevelName=new QGraphicsTextItem();
@@ -209,10 +246,10 @@ void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphics
                 LevelName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
                 scene->addItem(LevelName);
             }
-            else
+            else//второй столбик
             {
-                QGraphicsTextItem *LevelName=new QGraphicsTextItem();
                 scene->addRect(300, 50*(i-1), 200, 50, QPen(Qt::gray), QBrush(Qt::gray));
+                QGraphicsTextItem *LevelName=new QGraphicsTextItem();
                 LevelName->setPlainText(level_names.at(i));
                 LevelName->setFont(QFont("helvetica", 20));
                 LevelName->setPos(300, 3+50*(i-1));
@@ -253,8 +290,8 @@ void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
-    /*QFile *file;
-    for(int i=2; i<=10; i++)
+    QFile *file;
+    for(int i=2; i<=25; i++)
     {
         file=new QFile(QString("levels/level")+QString::number(i)+QString(".txt"));
         file->open(QIODevice::WriteOnly | QIODevice::Text);
@@ -262,7 +299,7 @@ void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
         writeStream << "level "+QString::number(i)+"\n"; // Посылаем строку в поток для записи
         writeStream << "level settings";
         file->close();
-    }*/
+    }
     isTimeLaunched=false;
     delete scene;
     scene = new QGraphicsScene;
@@ -302,13 +339,6 @@ void MyQGraphicsView::BackToGame(QGraphicsScene *scene, QGraphicsView *graphicsV
     isInMenu=false;
     scene = GameScene;
     graphicsView->setScene(scene);
-    //scene->setBackgroundBrush(Qt::black);
-    /*QString str_field[WIDTH][HEIGHT];
-    for(int i=0; i<PLANE_WIDTH; i++)
-        for(int j=0; j<PLANE_HEIGHT; j++)
-            str_field[i][j]="empty";
-    Field field(str_field, PLANE_WIDTH, PLANE_HEIGHT);*/
-    //field.draw(500, 550, scene);
     if(isTimeLaunched)
         timer->start(5);
 }
@@ -372,19 +402,90 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
     }
     else if(isInChooseLevelMenu)
     {
-        for(int i=0; i<levels_number_on_inset; i++)
+        for(int i=0; i<levels_number_on_inset; i++)//уровни
         {
             if((i%2==0)&&(pt.x()>0)&&(pt.x()<200)&&(pt.y()>50*i)&&(pt.y()<50*i+50))
             {
                 isInChooseLevelMenu=false;
-                QFile *file=new QFile(QString("levels/level")+QString::number(i+1)+QString(".txt"));
+                QFile *file=new QFile(QString("levels/level")+QString::number((cur_inset-1)*10+i+1)+QString(".txt"));
                 StartGame(scene, this, file);
             }
             if((i%2==1)&&(pt.x()>300)&&(pt.x()<500)&&(pt.y()>50*(i-1))&&(pt.y()<50*(i-1)+50))
             {
                 isInChooseLevelMenu=false;
-                QFile *file=new QFile(QString("levels/level")+QString::number(i+1)+QString(".txt"));
+                QFile *file=new QFile(QString("levels/level")+QString::number((cur_inset-1)*10+i+1)+QString(".txt"));
                 StartGame(scene, this, file);
+            }
+        }
+        if((pt.x()>-100)&&(pt.x()<100)&&(pt.y()>500)&&(pt.y()<550))//назад
+        {
+            isInChooseLevelMenu=false;
+            isInMainMenu=true;
+            MainMenu(scene, this);
+        }
+        for(int i=0; i<inset_number; i++)//номера вкладок
+        {
+            if((pt.x()>105+i*50)&&(pt.x()<105+i*50+50)&&(pt.y()>505)&&(pt.y()<535))
+            {
+                scene->addRect(0, 0, 500, 490, QPen(Qt::white), QBrush(Qt::white));
+                scene->addRect(105+(cur_inset-1)*50, 505, 50, 30, QPen(Qt::white), QBrush(Qt::white));
+                QGraphicsTextItem *InsetName=new QGraphicsTextItem();
+                InsetName->setPlainText(QString::number(cur_inset*10-9)+"-"+QString::number((i+1)*10));
+                InsetName->setFont(QFont("helvetica", 10));
+                InsetName->setPos(105+(cur_inset-1)*50, 505);
+                InsetName->setTextWidth(50);
+                InsetName->document()->setPageSize(QSizeF(50, 30));
+                InsetName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+                scene->addItem(InsetName);
+                cur_inset=i+1;
+                scene->addRect(105+i*50, 505, 50, 30, QPen(Qt::white), QBrush(Qt::white));
+                QGraphicsTextItem *CurInsetName=new QGraphicsTextItem();
+                CurInsetName->setPlainText(QString::number(cur_inset*10-9)+"-"+QString::number((i+1)*10));
+                CurInsetName->setFont(QFont("helvetica", 11, QFont::Bold));
+                CurInsetName->setPos(105+(cur_inset-1)*50, 505);
+                CurInsetName->setTextWidth(50);
+                CurInsetName->document()->setPageSize(QSizeF(50, 30));
+                CurInsetName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+                scene->addItem(CurInsetName);
+                int start=10*i;
+                do
+                {
+                    int length=level_names.length();
+                    if(length-10*i<=10)
+                        levels_number_on_inset=length-10*i;
+                    else
+                        levels_number_on_inset=10;
+                    for(int j=start; j<length; j++)
+                    {
+                        if(j>=10+10*i)//на вкладке 10 уровней
+                            break;
+                        if(j%2==0)//первый столбик
+                        {
+                            scene->addRect(0, 50*(j-10*i), 200, 50, QPen(Qt::gray), QBrush(Qt::gray));
+                            QGraphicsTextItem *LevelName=new QGraphicsTextItem();
+                            LevelName->setPlainText(level_names.at(j));
+                            LevelName->setFont(QFont("helvetica", 20));
+                            LevelName->setPos(0, 3+50*(j-10*i));
+                            LevelName->setTextWidth(200);
+                            LevelName->document()->setPageSize(QSizeF(200, 50));
+                            LevelName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+                            scene->addItem(LevelName);
+                        }
+                        else//второй столбик
+                        {
+                            scene->addRect(300, 50*(j-1-10*i), 200, 50, QPen(Qt::gray), QBrush(Qt::gray));
+                            QGraphicsTextItem *LevelName=new QGraphicsTextItem();
+                            LevelName->setPlainText(level_names.at(j));
+                            LevelName->setFont(QFont("helvetica", 20));
+                            LevelName->setPos(300, 3+50*(j-1-10*i));
+                            LevelName->setTextWidth(200);
+                            LevelName->document()->setPageSize(QSizeF(200, 50));
+                            LevelName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+                            scene->addItem(LevelName);
+                        }
+                    }
+                    start=length;
+                }while((isInChooseLevelMenu)&&(!isLevelListLoaded));
             }
         }
     }

@@ -28,5 +28,4 @@ public slots:
     void keyPressEvent(QKeyEvent *e);
     void slot_timerOut();
 };
-
 #endif // MYQGRAPHICSVIEW_H
