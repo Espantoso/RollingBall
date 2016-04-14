@@ -40,7 +40,7 @@ public:
         while(true)
         {
             QFile file(QString("levels/level")+QString::number(i)+QString(".txt"));
-            if(file.open(QIODevice::ReadOnly))
+            if((file.open(QIODevice::ReadOnly))&&(i<100))
             {
                 QByteArray level_name=file.readLine();
                 //почему-то иногда название уровня не считывается
