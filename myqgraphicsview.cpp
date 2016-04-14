@@ -290,8 +290,8 @@ void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
-    QFile *file;
-    for(int i=2; i<=25; i++)
+    /*QFile *file;
+    for(int i=2; i<=500; i++)
     {
         file=new QFile(QString("levels/level")+QString::number(i)+QString(".txt"));
         file->open(QIODevice::WriteOnly | QIODevice::Text);
@@ -299,7 +299,7 @@ void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
         writeStream << "level "+QString::number(i)+"\n"; // Посылаем строку в поток для записи
         writeStream << "level settings";
         file->close();
-    }
+    }*/
     isTimeLaunched=false;
     delete scene;
     scene = new QGraphicsScene;
@@ -430,7 +430,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
                 scene->addRect(0, 0, 500, 490, QPen(Qt::white), QBrush(Qt::white));
                 scene->addRect(105+(cur_inset-1)*50, 505, 50, 30, QPen(Qt::white), QBrush(Qt::white));
                 QGraphicsTextItem *InsetName=new QGraphicsTextItem();
-                InsetName->setPlainText(QString::number(cur_inset*10-9)+"-"+QString::number((i+1)*10));
+                InsetName->setPlainText(QString::number(cur_inset*10-9)+"-"+QString::number(cur_inset*10));
                 InsetName->setFont(QFont("helvetica", 10));
                 InsetName->setPos(105+(cur_inset-1)*50, 505);
                 InsetName->setTextWidth(50);
@@ -440,7 +440,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
                 cur_inset=i+1;
                 scene->addRect(105+i*50, 505, 50, 30, QPen(Qt::white), QBrush(Qt::white));
                 QGraphicsTextItem *CurInsetName=new QGraphicsTextItem();
-                CurInsetName->setPlainText(QString::number(cur_inset*10-9)+"-"+QString::number((i+1)*10));
+                CurInsetName->setPlainText(QString::number(cur_inset*10-9)+"-"+QString::number(cur_inset*10));
                 CurInsetName->setFont(QFont("helvetica", 11, QFont::Bold));
                 CurInsetName->setPos(105+(cur_inset-1)*50, 505);
                 CurInsetName->setTextWidth(50);
