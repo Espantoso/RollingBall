@@ -30,7 +30,7 @@ Wall *wall=new Wall(WallWidth, Qt::gray);
 bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false, LeftButtonDown=false;
 bool isTimeLaunched, AddMode, isInChooseLevelMenu=false, isLevelListLoaded=false;
 QVector <QByteArray> level_names;
-int levels_number_on_inset, inset_number, cur_inset=1;
+int levels_number_on_inset, inset_number, cur_inset=1, score=100, cur_level;
 class LevelListCreator:public QThread
 {
 public:
@@ -40,7 +40,7 @@ public:
         while(true)
         {
             QFile file(QString("levels/level")+QString::number(i)+QString(".txt"));
-            if((file.open(QIODevice::ReadOnly))&&(i<100))
+            if((file.open(QIODevice::ReadOnly))&&(i<=100))
             {
                 QByteArray level_name=file.readLine();
                 //почему-то иногда название уровня не считывается
@@ -59,6 +59,27 @@ public:
             }
             i++;
         }
+    }
+};
+class ScoreUpdater:public QThread
+{
+private:
+   QGraphicsTextItem *Score;
+public:
+    ScoreUpdater::ScoreUpdater(QGraphicsTextItem *score)
+    {
+        this->Score=score;
+    }
+    void run()
+    {
+        /*while((!isTimeLaunched)&&(!isInMenu))
+        {
+            int score_old=score;
+            if(score_old!=score)
+            {
+                Score->setPlainText("Score: "+QString::number(score));
+            }
+        }*/
     }
 };
 /*class LevelListDrawer:public QThread
@@ -189,10 +210,20 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     RemoveAll->document()->setPageSize(QSizeF(300, 50));
     RemoveAll->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(RemoveAll);
+    QGraphicsTextItem *Score=new QGraphicsTextItem("Score: "+QString::number(score));
+    Score->setFont(QFont("helvetica", 12));
+    Score->setPos(405, 181);
+    Score->setTextWidth(300);
+    Score->document()->setPageSize(QSizeF(300, 50));
+    Score->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(Score);
+    ScoreUpdater *score=new ScoreUpdater(Score);
+    score->start();
 }
 void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
     isInChooseLevelMenu=true;
+    isInMenu=true;
     scene = new QGraphicsScene;
     this->scene=scene;
     scene->setSceneRect(0, 0, 500, 500);
@@ -215,7 +246,7 @@ void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphics
             levels_number_on_inset=length;
         else
             levels_number_on_inset=10;
-        while(inset_number<length/10+1)
+        while(inset_number<length/10)
         {
             inset_number++;
             QGraphicsTextItem *InsetName=new QGraphicsTextItem();
@@ -225,8 +256,8 @@ void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphics
             else
                 InsetName->setFont(QFont("helvetica", 10));
             InsetName->setPos(105+(inset_number-1)*50, 505);
-            InsetName->setTextWidth(50);
-            InsetName->document()->setPageSize(QSizeF(50, 30));
+            InsetName->setTextWidth(70);
+            InsetName->document()->setPageSize(QSizeF(70, 30));
             InsetName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
             scene->addItem(InsetName);
         }
@@ -386,7 +417,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
     }
     else if(isInCompletedMenu)
     {
-        if((pt.x()>0)&&((pt.x()<300))&&(pt.y()>50)&&((pt.y()<100)))//Главное меню
+        if((pt.x()>0)&&((pt.x()<300))&&(pt.y()>250)&&((pt.y()<300)))//Главное меню
         {
             isInCompletedMenu=false;
             isInMainMenu=true;
@@ -407,12 +438,14 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             if((i%2==0)&&(pt.x()>0)&&(pt.x()<200)&&(pt.y()>50*i)&&(pt.y()<50*i+50))
             {
                 isInChooseLevelMenu=false;
+                cur_level=i+1;
                 QFile *file=new QFile(QString("levels/level")+QString::number((cur_inset-1)*10+i+1)+QString(".txt"));
                 StartGame(scene, this, file);
             }
             if((i%2==1)&&(pt.x()>300)&&(pt.x()<500)&&(pt.y()>50*(i-1))&&(pt.y()<50*(i-1)+50))
             {
                 isInChooseLevelMenu=false;
+                cur_level=i+1;
                 QFile *file=new QFile(QString("levels/level")+QString::number((cur_inset-1)*10+i+1)+QString(".txt"));
                 StartGame(scene, this, file);
             }
@@ -425,26 +458,26 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
         }
         for(int i=0; i<inset_number; i++)//номера вкладок
         {
-            if((pt.x()>105+i*50)&&(pt.x()<105+i*50+50)&&(pt.y()>505)&&(pt.y()<535))
+            if((pt.x()>105+i*50)&&(pt.x()<105+i*50+70)&&(pt.y()>505)&&(pt.y()<535))
             {
                 scene->addRect(0, 0, 500, 490, QPen(Qt::white), QBrush(Qt::white));
-                scene->addRect(105+(cur_inset-1)*50, 505, 50, 30, QPen(Qt::white), QBrush(Qt::white));
+                scene->addRect(105+(cur_inset-1)*50, 505, 65, 30, QPen(Qt::white), QBrush(Qt::white));
                 QGraphicsTextItem *InsetName=new QGraphicsTextItem();
                 InsetName->setPlainText(QString::number(cur_inset*10-9)+"-"+QString::number(cur_inset*10));
                 InsetName->setFont(QFont("helvetica", 10));
                 InsetName->setPos(105+(cur_inset-1)*50, 505);
-                InsetName->setTextWidth(50);
-                InsetName->document()->setPageSize(QSizeF(50, 30));
+                InsetName->setTextWidth(70);
+                InsetName->document()->setPageSize(QSizeF(70, 30));
                 InsetName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
                 scene->addItem(InsetName);
                 cur_inset=i+1;
-                scene->addRect(105+i*50, 505, 50, 30, QPen(Qt::white), QBrush(Qt::white));
+                scene->addRect(105+i*50, 505, 65, 30, QPen(Qt::white), QBrush(Qt::white));
                 QGraphicsTextItem *CurInsetName=new QGraphicsTextItem();
                 CurInsetName->setPlainText(QString::number(cur_inset*10-9)+"-"+QString::number(cur_inset*10));
                 CurInsetName->setFont(QFont("helvetica", 11, QFont::Bold));
                 CurInsetName->setPos(105+(cur_inset-1)*50, 505);
-                CurInsetName->setTextWidth(50);
-                CurInsetName->document()->setPageSize(QSizeF(50, 30));
+                CurInsetName->setTextWidth(70);
+                CurInsetName->document()->setPageSize(QSizeF(70, 30));
                 CurInsetName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
                 scene->addItem(CurInsetName);
                 int start=10*i;
@@ -511,6 +544,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             for(int j=0; j<wall->getWallLength();)
             {
                 wall->deletePoint(scene, j);
+                score++;
             }
             return;
         }
@@ -534,6 +568,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             if((pt.x()>500-WallWidth)||(pt.x()<WallWidth)||(pt.y()>500-WallWidth)||(pt.y()<WallWidth))
                 return;
             wall->addWallPoint(scene, pt.x(), pt.y());
+            score--;
         }
         else
         {
@@ -546,7 +581,10 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
                     float Wally=wall->getWallPointCenter(j).y();
                     distance=qSqrt((pt.x()-Wallx)*(pt.x()-Wallx)+(pt.y()-Wally)*(pt.y()-Wally));
                     if(distance<2*WallWidth)
+                    {
                         wall->deletePoint(scene, j);
+                        score++;
+                    }
                 }
             }
         }
@@ -609,6 +647,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
                             return;
                         }
                         wall->addWallPoint(scene, x, y);
+                        score--;
                     }
                 }
                 else
@@ -646,6 +685,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
                             return;
                         }
                         wall->addWallPoint(scene, x, y);
+                        score--;
                     }
                 }
             }
@@ -660,6 +700,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
                     return;
             }
             wall->addWallPoint(scene, pt.x(), pt.y());
+            score--;
         }
     }
     else if((!isInMenu)&&(!isTimeLaunched)&&(!AddMode))
@@ -673,7 +714,10 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
                 float Wally=wall->getWallPointCenter(j).y();
                 distance=qSqrt((pt.x()-Wallx)*(pt.x()-Wallx)+(pt.y()-Wally)*(pt.y()-Wally));
                 if(distance<2*WallWidth)
+                {
                     wall->deletePoint(scene, j);
+                    score++;
+                }
             }
         }
     }
@@ -724,8 +768,8 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
 void MyQGraphicsView::Completed()
 {
     isInCompletedMenu=true;
-    timer->stop();
     isInMenu=true;
+    timer->stop();
     scene = new QGraphicsScene;
     this->setScene(scene);
     QGraphicsTextItem *Completed=new QGraphicsTextItem("Completed!");
@@ -735,10 +779,29 @@ void MyQGraphicsView::Completed()
     Completed->document()->setPageSize(QSizeF(300, 100));
     Completed->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(Completed);
-    scene->addRect(0, 50, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
+    if(cur_level!=level_names.length())
+    {
+        scene->addRect(0, 50, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
+        QGraphicsTextItem *NextLevel=new QGraphicsTextItem("Next Level");
+        NextLevel->setFont(QFont("helvetica", 20));
+        NextLevel->setPos(0, 50);
+        NextLevel->setTextWidth(300);
+        NextLevel->document()->setPageSize(QSizeF(300, 50));
+        NextLevel->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+        scene->addItem(NextLevel);
+    }
+    scene->addRect(0, 150, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *Restart=new QGraphicsTextItem("Restart");
+    Restart->setFont(QFont("helvetica", 20));
+    Restart->setPos(0, 150);
+    Restart->setTextWidth(300);
+    Restart->document()->setPageSize(QSizeF(300, 50));
+    Restart->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(Restart);
+    scene->addRect(0, 250, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *MainMenu=new QGraphicsTextItem("Main menu");
     MainMenu->setFont(QFont("helvetica", 20));
-    MainMenu->setPos(0, 50);
+    MainMenu->setPos(0, 250);
     MainMenu->setTextWidth(300);
     MainMenu->document()->setPageSize(QSizeF(300, 50));
     MainMenu->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
