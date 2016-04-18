@@ -5,8 +5,39 @@
 #include <QGraphicsScene>
 #include <QGraphicsEllipseItem>
 #include <QMouseEvent>
-#define PLANE_WIDTH 10
-#define PLANE_HEIGHT 10
+#include <stack>
+#include <QtGui>
+#include <Box2D/Box2D.h>
+#include <QMainWindow>
+
+class dynamicBodyDefaultParams
+{
+public:
+    dynamicBodyDefaultParams(float32 defAngle, QPointF defA, QPointF defB, b2Body* defBody)
+    {
+        this->angle = defAngle;
+        this->a = defA;
+        this->b = defB;
+        this->body = defBody;
+    }
+    dynamicBodyDefaultParams(QPointF defA, QPoint defB, b2Body* defBody)
+    {
+        this->a = defA;
+        this->b = defB;
+        this->body = defBody;
+    }
+    dynamicBodyDefaultParams(float32 defAngle, QPointF defA, b2Body* defBody)
+    {
+        this->angle = defAngle;
+        this->a = defA;
+        this->body = defBody;
+    }
+private:
+    float32 angle;
+    QPointF a;
+    QPointF b;
+    b2Body* body;
+};
 
 class MyQGraphicsView : public QGraphicsView
 {
@@ -18,9 +49,45 @@ public:
     void ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void BackToGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void Completed();
+
+private:
+    void createWorld(QGraphicsScene *scene, QGraphicsView *graphicsView);
+    void createPolygon(int x, int y, int width, int height);
+    void createStaticPolygon(int x, int y, int width, int height);
+    void createLine(int x1, int y1, int x2, int y2);
+    void createStaticLine(int x1, int y1, int x2, int y2);
+    void createCircle(int x, int y, int r);
+    void deleteLastPlacedObject();
+
+    static const int winWidth = 1024;
+    static const int winHeight = 768;
+    static const int rightOffset = 100, bottomOffset = 100, leftOffset = 20, topOffset = 20;
+    static constexpr float32 pixPerUnit = 10.0f;
+    static constexpr float32 timeStep = 60.0f;
+    static const int32 velocityIterations = 8;
+    static const int32 positionIterations = 3;
+
+    //QTimer *timer;
+    b2World *world;
+    QList<b2Body*> bodyList;
+    QList<b2Body*>::iterator bodyListIt;
+
+    std::stack<QPointF> coordsStack;
+    std::stack<b2Body*> userObjectsStack;
+    std::stack<QGraphicsItem*> userGraphObjectsStack;
+    QList<dynamicBodyDefaultParams> defParams;
+    QList<dynamicBodyDefaultParams>::iterator defParamsIt;
+    b2Body* ballPointer;
+    b2Vec2 ballDefPos;
+    int numOfUserObjects;
+    //modes
+    bool simulation;
+
 signals:
     void signal_moveToNextPosition();
+
 public slots:
+    void updatePhysics();
     void mousePressEvent(QMouseEvent * e);
     void mouseReleaseEvent(QMouseEvent *e);
     //void mouseDoubleClickEvent(QMouseEvent * e);

@@ -8,6 +8,10 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+INCLUDEPATH += ../phy/Box2D/
+LIBS += -L"../phy/Box2D"
+LIBS += -lBox2D
+
 TARGET = RollingBall
 TEMPLATE = app
 CONFIG += c++11

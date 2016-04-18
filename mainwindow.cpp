@@ -4,9 +4,8 @@
 #include "myqgraphicsview.h"
 #include <QGraphicsTextItem>
 #include <QTextDocument>
-MainWindow::MainWindow(QWidget *parent):
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+
+MainWindow::MainWindow(QWidget *parent):QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 }

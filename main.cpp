@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include <QApplication>
-//#include "qml-box2d/box2dplugin.h"
 
 int main(int argc, char *argv[])
 {
