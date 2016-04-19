@@ -27,7 +27,7 @@ public:
     Wall(double width, Qt::GlobalColor color);
     void addWallPoint(QGraphicsScene *scene, double x, double y);
     int getWallLength();//возвращает длину вектора wall
-	QPointF getWallPointCenter(int i);
+    QPointF getWallPointCenter(int i);
     QGraphicsEllipseItem *getWallPoint(int i);
     QGraphicsEllipseItem *getWallPoint(double x, double y);
     void DeleteFromMemory(QGraphicsScene *scene);//удалить все элементы вектора wall
