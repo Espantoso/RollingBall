@@ -73,6 +73,8 @@ private:
     QList<b2Body*>::iterator bodyListIt;
 
     std::stack<QPointF> coordsStack;
+    QGraphicsLineItem *tmpLine = new QGraphicsLineItem;
+
     std::stack<b2Body*> userObjectsStack;
     std::stack<QGraphicsItem*> userGraphObjectsStack;
     QList<dynamicBodyDefaultParams> defParams;

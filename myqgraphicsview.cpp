@@ -63,7 +63,7 @@ public:
         }
     }
 };
-//class ScoreUpdater:public QThread
+/*//class ScoreUpdater:public QThread
 //{
 //private:
 //   QGraphicsTextItem *Score;
@@ -83,7 +83,7 @@ public:
 //            }
 //        }*/
 //    }
-//};
+//};*/
 /*class LevelListDrawer:public QThread
 {
 private:
@@ -270,6 +270,7 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
 {
     AddMode=true;
     isInMenu=false;
+    simulation=false;
     delete scene;
     scene = new QGraphicsScene;
     this->scene=scene;
@@ -308,7 +309,7 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     createStaticLine(leftOffset, winHeight-bottomOffset, winWidth-rightOffset, winHeight-bottomOffset);//bottom border
     createStaticLine(winWidth-rightOffset, leftOffset, winWidth-rightOffset, winHeight-bottomOffset);//right border
     createStaticLine(leftOffset, topOffset, winWidth-rightOffset, leftOffset);//top border
-    createStaticLine(0,0,100,100);
+
     createCircle(50, 50, 10);
 
     numOfUserObjects = 0;//число объектов, добавленных игроком
@@ -508,8 +509,6 @@ void MyQGraphicsView::BackToGame(QGraphicsScene *scene, QGraphicsView *graphicsV
     isInMenu=false;
     scene = GameScene;
     graphicsView->setScene(scene);
-    if(isTimeLaunched)
-        timer->start(5);
 }
 void SelectAddWallTool(QGraphicsScene *scene)
 {
@@ -662,19 +661,22 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
     }
     else//уровень
     {
-        if ((pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
+        if(!simulation)//во время симуляции редактирование запрещено
         {
-            coordsStack.push(pt);
-
-            if (coordsStack.size()==2)
+            if ((pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
             {
-                QPointF temp1 = coordsStack.top();
-                coordsStack.pop();
-                QPointF temp2 = coordsStack.top();
-                createStaticLine(temp1.x(), temp1.y(), temp2.x(), temp2.y());
-                if (!coordsStack.empty())
-                    while (!coordsStack.empty())
-                        coordsStack.pop();
+                coordsStack.push(pt);
+
+                if (coordsStack.size()==2)
+                {
+                    QPointF temp1 = coordsStack.top();
+                    coordsStack.pop();
+                    QPointF temp2 = coordsStack.top();
+                    createStaticLine(temp1.x(), temp1.y(), temp2.x(), temp2.y());
+                    if (!coordsStack.empty())
+                        while (!coordsStack.empty())
+                            coordsStack.pop();
+                }
             }
         }
     }
@@ -686,6 +688,43 @@ void MyQGraphicsView::mouseReleaseEvent(QMouseEvent *e)
 }
 void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
 {
+
+    QPointF pt = mapToScene(e->pos());
+    if(isInMainMenu)
+    {
+
+    }
+    else if(isInPauseMenu)
+    {
+
+    }
+    else if(isInCompletedMenu)
+    {
+
+    }
+    else if(isTimeLaunched)
+    {
+
+    }
+    else if(isInChooseLevelMenu)
+    {
+
+    }
+    else//уровень
+    {
+        if(!simulation)
+        {
+            if ((pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
+            {
+                if (coordsStack.size()==1)
+                {
+                    QPointF temp1 = coordsStack.top();
+                    tmpLine->setLine(temp1.x(), temp1.y(), pt.x(), pt.y());
+                    scene->addItem(tmpLine);
+                }
+            }
+        }
+    }
     /*QPointF pt = mapToScene(e->pos());
     if((!isInMenu)&&(!isTimeLaunched)&&(AddMode))
     {
@@ -849,6 +888,13 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
     {
         timer->stop();
         isInPauseMenu=true;
+        timer->stop();
+        simulation = false;
+        ballPointer->SetTransform(ballDefPos, 1.0f);
+        ballPointer->SetAngularVelocity(0);
+        ballPointer->SetLinearVelocity(b2Vec2(0,0));
+        ballPointer->ApplyLinearImpulse(b2Vec2(50, 0), b2Vec2(1, 1), 1);
+        updatePhysics();
         PauseMenu(scene, this);
     }
     if(isInMainMenu)
@@ -893,13 +939,16 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
         }
         if (key == Qt::Key_Backspace)
         {
-            if (numOfUserObjects > 0)
+            if(!simulation)//во время симуляции редактирование запрещено
             {
-                scene->removeItem(userGraphObjectsStack.top());
-                userGraphObjectsStack.pop();
-                world->DestroyBody(userObjectsStack.top());
-                userObjectsStack.pop();
-                numOfUserObjects--;
+                if (numOfUserObjects > 0)
+                {
+                    scene->removeItem(userGraphObjectsStack.top());
+                    userGraphObjectsStack.pop();
+                    world->DestroyBody(userObjectsStack.top());
+                    userObjectsStack.pop();
+                    numOfUserObjects--;
+                }
             }
         }
     }
