@@ -720,7 +720,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
                 {
                     QPointF temp1 = coordsStack.top();
                     tmpLine->setLine(temp1.x(), temp1.y(), pt.x(), pt.y());
-                    scene->addItem(tmpLine);
+                    //scene->addItem(tmpLine);
                 }
             }
         }
@@ -894,7 +894,7 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
         ballPointer->SetAngularVelocity(0);
         ballPointer->SetLinearVelocity(b2Vec2(0,0));
         ballPointer->ApplyLinearImpulse(b2Vec2(50, 0), b2Vec2(1, 1), 1);
-        updatePhysics();
+        //updatePhysics();
         PauseMenu(scene, this);
     }
     if(isInMainMenu)
