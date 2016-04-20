@@ -300,7 +300,6 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
         Error->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
         scene->addItem(Error);
     }
-
     b2Vec2 gravity(0.0f, 0.0f);
     world = new b2World(gravity);
     world->SetAllowSleeping(true);
@@ -508,6 +507,7 @@ MyQGraphicsView::MyQGraphicsView(QWidget *parent):QGraphicsView(parent)
 }
 void MyQGraphicsView::BackToGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
+    timer->start(1000 / timeStep);
     isInMenu=false;
     scene = GameScene;
     graphicsView->setScene(scene);

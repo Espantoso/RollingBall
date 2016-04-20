@@ -61,7 +61,7 @@ private:
 
     static const int winWidth = 1024;
     static const int winHeight = 768;
-    static const int rightOffset = 100, bottomOffset = 100, leftOffset = 20, topOffset = 20;
+    static const int rightOffset = 500, bottomOffset = 100, leftOffset = 20, topOffset = 20;
     static constexpr float32 pixPerUnit = 10.0f;
     static constexpr float32 timeStep = 60.0f;
     static const int32 velocityIterations = 8;
