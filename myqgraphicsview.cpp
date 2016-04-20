@@ -276,6 +276,8 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     this->scene=scene;
     //scene->setSceneRect(0, 0, 500, 500);
     graphicsView->setScene(scene);
+    tmpLine=new QGraphicsLineItem;
+    scene->addItem(tmpLine);
     if(file->open(QIODevice::ReadOnly))//вывод настроек уровня на экран для тестирования
     {
         QByteArray level_properties=file->readAll();
