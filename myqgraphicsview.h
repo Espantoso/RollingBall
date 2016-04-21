@@ -49,7 +49,8 @@ public:
     void ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void BackToGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void Completed();
-
+    void LaunchTime(QGraphicsScene *scene);
+    void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
 private:
     void createWorld(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void createPolygon(int x, int y, int width, int height);

@@ -137,22 +137,6 @@ public:
         }
     }
 };*/
-
-void LaunchTime(QGraphicsScene *scene)
-{
-    timer->start(5);
-    isTimeLaunched=true;
-    scene->addRect(510, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
-    QGraphicsTextItem *Restart=new QGraphicsTextItem("Restart");
-    Restart->setFont(QFont("helvetica", 20));
-    Restart->setPos(407, 45);
-    Restart->setTextWidth(300);
-    Restart->document()->setPageSize(QSizeF(300, 50));
-    Restart->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-    scene->addItem(Restart);
-    scene->addRect(510, 90, 200, 500, QPen(Qt::white), QBrush(Qt::white));
-}
-
 void MyQGraphicsView::createWorld(QGraphicsScene *scene, QGraphicsView *view)
 {
     view->setRenderHint(QPainter::Antialiasing);
@@ -234,6 +218,8 @@ void MyQGraphicsView::createCircle(int x, int y, int r)
 }
 void MyQGraphicsView::updatePhysics()
 {
+    std::cout<<"begin";
+    std::cout.flush();
     if (!bodyList.isEmpty())
     {
         QGraphicsItem *item;
@@ -247,24 +233,47 @@ void MyQGraphicsView::updatePhysics()
         {
             body = *bodyListIt++;
             item = reinterpret_cast<QGraphicsItem*>(body->GetUserData());
+            std::cout<<"1";
+            std::cout.flush();
+            std::cout<<item;
+            std::cout.flush();
+            std::cout<<"Length: "<<bodyList.length()<<"\n";
+            std::cout.flush();
+            item->type();
+            std::cout<<item;
+            std::cout.flush();
             switch (item->type())
             {
-            case 3: rect = reinterpret_cast<QGraphicsRectItem*>(item);
+            case 3:                 std::cout<<"3begin";
+                std::cout.flush();rect = reinterpret_cast<QGraphicsRectItem*>(item);
                 rect->setPos(body->GetPosition().x * pixPerUnit, body->GetPosition().y * pixPerUnit);
                 rect->setRotation(body->GetAngle());
+                std::cout<<"3end";
+                std::cout.flush();
                 break;
-            case 4: ellipse = reinterpret_cast<QGraphicsEllipseItem*>(item);
+            case 4: std::cout<<"4begin";
+                std::cout.flush();ellipse = reinterpret_cast<QGraphicsEllipseItem*>(item);
                 ellipse->setPos(body->GetPosition().x * pixPerUnit, body->GetPosition().y * pixPerUnit);
                 ellipse->setRotation(body->GetAngle());
+                std::cout<<"4end";
+                std::cout.flush();
                 break;
-            case 5: line = reinterpret_cast<QGraphicsLineItem*>(item);
+            case 5: std::cout<<"5begin";
+                std::cout.flush();line = reinterpret_cast<QGraphicsLineItem*>(item);
                 line->setPos(body->GetPosition().x * pixPerUnit, body->GetPosition().y * pixPerUnit);
                 line->setRotation(body->GetAngle());
+                std::cout<<"5end";
+                std::cout.flush();
                 break;
+            default:            std::cout<<"6";
+                std::cout.flush();
             }
+            std::cout<<"7";
+            std::cout.flush();
         }
-
     }
+    std::cout<<"end";
+    std::cout.flush();
 }
 void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView, QFile *file)
 {
@@ -280,10 +289,24 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     scene->addItem(tmpLine);
     if(file->open(QIODevice::ReadOnly))//вывод настроек уровня на экран для тестирования
     {
-        QByteArray level_properties=file->readAll();
+        QTextStream instream(file);
+        QString level_name=instream.readLine();
+        QString level_properties=level_name;
+        QGraphicsTextItem *LevelName=new QGraphicsTextItem(level_name);
+        LevelName->setFont(QFont("helvetica", 16));
+        LevelName->setPos(-120, -30);
+        LevelName->setTextWidth(300);
+        LevelName->document()->setPageSize(QSizeF(300, 50));
+        LevelName->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+        scene->addItem(LevelName);
+        while(!instream.atEnd())
+        {
+            QString line=instream.readLine();
+            level_properties+=line;
+        }
         QGraphicsTextItem *Levelprp=new QGraphicsTextItem(level_properties);
         Levelprp->setFont(QFont("helvetica", 12));
-        Levelprp->setPos(405, 200);
+        Levelprp->setPos(575, 200);
         Levelprp->setTextWidth(300);
         Levelprp->document()->setPageSize(QSizeF(300, 50));
         Levelprp->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
@@ -300,6 +323,14 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
         Error->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
         scene->addItem(Error);
     }
+    scene->addRect(560, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *Start=new QGraphicsTextItem("Start");
+    Start->setFont(QFont("helvetica", 20));
+    Start->setPos(445, 45);
+    Start->setTextWidth(300);
+    Start->document()->setPageSize(QSizeF(300, 50));
+    Start->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(Start);
     b2Vec2 gravity(0.0f, 0.0f);
     world = new b2World(gravity);
     world->SetAllowSleeping(true);
@@ -432,48 +463,35 @@ void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphics
         start=length;
     }while((isInChooseLevelMenu)&&(!isLevelListLoaded));
 }
-void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
+void MyQGraphicsView::RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
     isInMenu=false;
     isTimeLaunched=false;
     timer->stop();
-    ball->setPos(BallStartPos);
-    ball->setDir(BallStartDir);
-    scene->addRect(510, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+    simulation = false;
+    ballPointer->SetTransform(ballDefPos, 1.0f);
+    ballPointer->SetAngularVelocity(0);
+    ballPointer->SetLinearVelocity(b2Vec2(0,0));
+    ballPointer->ApplyLinearImpulse(b2Vec2(50, 0), b2Vec2(1, 1), 1);
+    updatePhysics();
+    scene->addRect(560, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *Start=new QGraphicsTextItem("Start");
     Start->setFont(QFont("helvetica", 20));
-    Start->setPos(395, 45);
+    Start->setPos(445, 45);
     Start->setTextWidth(300);
     Start->document()->setPageSize(QSizeF(300, 50));
     Start->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(Start);
-    scene->addRect(510, 90, 30, 30, QPen(Qt::red), QBrush(Qt::gray));
-    scene->addRect(550, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
-    scene->addRect(510, 140, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
-    QGraphicsTextItem *RemoveAll=new QGraphicsTextItem("Remove all");
-    RemoveAll->setFont(QFont("helvetica", 12));
-    RemoveAll->setPos(405, 141);
-    RemoveAll->setTextWidth(300);
-    RemoveAll->document()->setPageSize(QSizeF(300, 50));
-    RemoveAll->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-    scene->addItem(RemoveAll);
 }
 void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
-    /*QFile *file;
-    for(int i=2; i<=500; i++)
-    {
-        file=new QFile(QString("levels/level")+QString::number(i)+QString(".txt"));
-        file->open(QIODevice::WriteOnly | QIODevice::Text);
-        QTextStream writeStream(file);
-        writeStream << "level "+QString::number(i)+"\n"; // Посылаем строку в поток для записи
-        writeStream << "level settings";
-        file->close();
-    }*/
     isTimeLaunched=false;
     delete scene;
     scene = new QGraphicsScene;
     graphicsView->setScene(scene);
+    QPixmap *image=new QPixmap("images/MainMenu.jpg");
+    QGraphicsPixmapItem *ImageItem=scene->addPixmap(*image);
+    ImageItem->setPos(-image->width()/2+150, -image->height()/2);
     scene->addRect(0, 50, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     scene->addRect(0, -50, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *StartGame=new QGraphicsTextItem("Choose level");
@@ -524,6 +542,21 @@ void SelectRemoveWallTool(QGraphicsScene *scene)
     scene->addRect(510, 90, 30, 30, QPen(Qt::black), QBrush(Qt::gray));
     scene->addRect(550, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
 }
+void MyQGraphicsView::LaunchTime(QGraphicsScene *scene)
+{
+    timer->start(1000 / timeStep);
+    simulation = true;
+    isTimeLaunched=true;
+    scene->addRect(560, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *Restart=new QGraphicsTextItem("Restart");
+    Restart->setFont(QFont("helvetica", 20));
+    Restart->setPos(457, 45);
+    Restart->setTextWidth(300);
+    Restart->document()->setPageSize(QSizeF(300, 50));
+    Restart->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(Restart);
+    scene->addRect(560, 90, 200, 500, QPen(Qt::white), QBrush(Qt::white));
+}
 void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
 {
     LeftButtonDown=true;
@@ -540,12 +573,12 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
     }
     else if(isInPauseMenu)
     {
-        if((pt.x()>0)&&((pt.x()<300))&&(pt.y()>-125)&&((pt.y()<-75)))//Вернуться к игре
+        /*if((pt.x()>0)&&((pt.x()<300))&&(pt.y()>-125)&&((pt.y()<-75)))//Вернуться к игре
         {
             isInPauseMenu=false;
             BackToGame(scene, this);
-        }
-        else if((pt.x()>0)&&((pt.x()<300))&&(pt.y()>-25)&&((pt.y()<25)))//Главное меню
+        }*/
+        if((pt.x()>0)&&((pt.x()<300))&&(pt.y()>-25)&&((pt.y()<25)))//Главное меню
         {
             isInMainMenu=true;
             isInPauseMenu=false;
@@ -565,7 +598,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
     }
     else if(isTimeLaunched)
     {
-        if((pt.x()>510)&&(pt.x()<605)&&(pt.y()>50)&&(pt.y()<80))
+        if((pt.x()>560)&&(pt.x()<655)&&(pt.y()>50)&&(pt.y()<80))
         {
             RestartGame(scene, this);
         }
@@ -663,6 +696,11 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
     }
     else//уровень
     {
+        if((pt.x()>560)&&(pt.x()<655)&&(pt.y()>50)&&(pt.y()<80))
+        {
+            LaunchTime(scene);
+            return;
+        }
         if(!simulation)//во время симуляции редактирование запрещено
         {
             if ((pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
@@ -685,7 +723,6 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
 }
 void MyQGraphicsView::mouseReleaseEvent(QMouseEvent *e)
 {
-    PrevPointX=-100;
     LeftButtonDown=false;
 }
 void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
@@ -858,16 +895,15 @@ void PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
     GameScene=scene;
     scene = new QGraphicsScene;
     graphicsView->setScene(scene);
-    scene->addRect(0, -125, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
-    scene->addRect(0, -25, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
-    scene->addRect(0, 75, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
+    /*scene->addRect(0, -125, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *ReturnToGame=new QGraphicsTextItem("Back to game");
     ReturnToGame->setFont(QFont("helvetica", 20));
     ReturnToGame->setPos(0, -125);
     ReturnToGame->setTextWidth(300);
     ReturnToGame->document()->setPageSize(QSizeF(300, 50));
     ReturnToGame->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-    scene->addItem(ReturnToGame);
+    scene->addItem(ReturnToGame);*/
+    scene->addRect(0, -25, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *MainMenu=new QGraphicsTextItem("Main menu");
     MainMenu->setFont(QFont("helvetica", 20));
     MainMenu->setPos(0, -25);
@@ -875,6 +911,7 @@ void PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
     MainMenu->document()->setPageSize(QSizeF(300, 50));
     MainMenu->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(MainMenu);
+    scene->addRect(0, 75, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *Quit=new QGraphicsTextItem("Exit");
     Quit->setFont(QFont("helvetica", 20));
     Quit->setPos(0, 75);
