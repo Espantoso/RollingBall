@@ -171,10 +171,10 @@ void MyQGraphicsView::createStaticLine(int x1, int y1, int x2, int y2)
     b2EdgeShape shape;
     shape.Set(b2Vec2(0, 0), b2Vec2((x2-x1) / pixPerUnit, (y2-y1) / pixPerUnit));
     body->CreateFixture(&shape, 0.0f);
-    //
     QGraphicsLineItem *line = new QGraphicsLineItem;
     line->setPos(x1, y1);
     line->setLine(0, 0, x2-x1, y2-y1);
+    line->setPen(QPen(Qt::gray, 3));
     scene->addItem(line);
     userGraphObjectsStack.push(line);
     body->SetUserData(line);
@@ -326,7 +326,7 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     scene->addRect(560, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *Start=new QGraphicsTextItem("Start");
     Start->setFont(QFont("helvetica", 20));
-    Start->setPos(445, 45);
+    Start->setPos(442, 45);
     Start->setTextWidth(300);
     Start->document()->setPageSize(QSizeF(300, 50));
     Start->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
@@ -346,7 +346,7 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
 
     numOfUserObjects = 0;//число объектов, добавленных игроком
 
-    /////////////////////////////////////
+
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updatePhysics()));
 
@@ -477,7 +477,7 @@ void MyQGraphicsView::RestartGame(QGraphicsScene *scene, QGraphicsView *graphics
     scene->addRect(560, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *Start=new QGraphicsTextItem("Start");
     Start->setFont(QFont("helvetica", 20));
-    Start->setPos(445, 45);
+    Start->setPos(442, 45);
     Start->setTextWidth(300);
     Start->document()->setPageSize(QSizeF(300, 50));
     Start->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
@@ -513,7 +513,6 @@ MyQGraphicsView::MyQGraphicsView(QWidget *parent):QGraphicsView(parent)
 {
     LevelListCreator *level_list_creator=new LevelListCreator();
     level_list_creator->start();
-
     isInMenu=true;
     isInMainMenu=true;
     isInPauseMenu=false;
@@ -705,18 +704,24 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
         {
             if ((pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
             {
-                coordsStack.push(pt);
-
-                if (coordsStack.size()==2)
+                QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
+                QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x(), pt.y(), 1, 1);
+                if(!ball->collidesWithItem(checkCircle))//если пользователь нажал не на шар
                 {
-                    QPointF temp1 = coordsStack.top();
-                    coordsStack.pop();
-                    QPointF temp2 = coordsStack.top();
-                    createStaticLine(temp1.x(), temp1.y(), temp2.x(), temp2.y());
-                    if (!coordsStack.empty())
-                        while (!coordsStack.empty())
-                            coordsStack.pop();
+                    coordsStack.push(pt);
+
+                    if (coordsStack.size()==2)
+                    {
+                        QPointF temp1 = coordsStack.top();
+                        coordsStack.pop();
+                        QPointF temp2 = coordsStack.top();
+                        createStaticLine(temp1.x(), temp1.y(), temp2.x(), temp2.y());
+                        if (!coordsStack.empty())
+                            while (!coordsStack.empty())
+                                coordsStack.pop();
+                    }
                 }
+                delete checkCircle;
             }
         }
     }
@@ -727,7 +732,6 @@ void MyQGraphicsView::mouseReleaseEvent(QMouseEvent *e)
 }
 void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
 {
-
     QPointF pt = mapToScene(e->pos());
     if(isInMainMenu)
     {
@@ -757,9 +761,12 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
             {
                 if (coordsStack.size()==1)
                 {
+                    QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
                     QPointF temp1 = coordsStack.top();
-                    tmpLine->setLine(temp1.x(), temp1.y(), pt.x(), pt.y());
-                    //scene->addItem(tmpLine);
+                    QGraphicsLineItem *checkLine=new QGraphicsLineItem(temp1.x(), temp1.y(), pt.x(), pt.y());
+                    if(!ball->collidesWithItem(checkLine))//чтобы стена не проходила сквозь шар
+                        tmpLine->setLine(temp1.x(), temp1.y(), pt.x(), pt.y());
+                    delete checkLine;
                 }
             }
         }
