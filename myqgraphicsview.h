@@ -56,7 +56,7 @@ private:
     void createPolygon(int x, int y, int width, int height);
     void createStaticPolygon(int x, int y, int width, int height);
     void createLine(int x1, int y1, int x2, int y2);
-    void createStaticLine(int x1, int y1, int x2, int y2);
+    QGraphicsLineItem* createStaticLine(int x1, int y1, int x2, int y2, QString type="not user");
     void createCircle(int x, int y, int r);
     void deleteLastPlacedObject();
 
@@ -76,13 +76,14 @@ private:
     std::stack<QPointF> coordsStack;
     QGraphicsLineItem *tmpLine = new QGraphicsLineItem;
 
-    std::stack<b2Body*> userObjectsStack;
-    std::stack<QGraphicsItem*> userGraphObjectsStack;
+    //std::stack<b2Body*> userObjectsStack;
+    //std::stack<QGraphicsItem*> userGraphObjectsStack;
+    QVector <b2Body*> userObjects;
     QList<dynamicBodyDefaultParams> defParams;
     QList<dynamicBodyDefaultParams>::iterator defParamsIt;
     b2Body* ballPointer;
     b2Vec2 ballDefPos;
-    int numOfUserObjects;
+    //int numOfUserObjects;
     //modes
     bool simulation;
 
