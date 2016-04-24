@@ -51,6 +51,7 @@ public:
     void Completed();
     void LaunchTime(QGraphicsScene *scene);
     void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
+    void RecordsTable(QGraphicsScene *scene, QGraphicsView *graphicsView);
 private:
     void createWorld(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void createPolygon(int x, int y, int width, int height);
