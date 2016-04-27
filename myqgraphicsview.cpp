@@ -974,6 +974,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
                             if(length<score)
                             {
                                 line=createStaticLine(temp1.x(), temp1.y(), temp2.x(), temp2.y(), "user");
+                                //Вот тута ошибка
                                 //qreal x0=checkLine->boundingRect().x();//без этих строк из за округления количество очков может превысить тысячу
                                 //qreal y0=checkLine->boundingRect().y();
                                 //qreal x1=checkLine->boundingRect().x()+checkLine->boundingRect().width();
