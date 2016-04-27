@@ -331,6 +331,15 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     Score->document()->setPageSize(QSizeF(300, 50));
     Score->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
     scene->addItem(Score);
+
+    if (world != NULL)
+    {
+        //world->~b2World();
+        bodyList.clear();
+        userObjects.clear();
+        while (!coordsStack.empty())
+            coordsStack.pop();
+    }
     b2Vec2 gravity(0.0f, 0.0f);
     world = new b2World(gravity);
     world->SetAllowSleeping(true);
@@ -965,10 +974,10 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
                             if(length<score)
                             {
                                 line=createStaticLine(temp1.x(), temp1.y(), temp2.x(), temp2.y(), "user");
-                                qreal x0=checkLine->boundingRect().x();//без этих строк из за округления количество очков может превысить тысячу
-                                qreal y0=checkLine->boundingRect().y();
-                                qreal x1=checkLine->boundingRect().x()+checkLine->boundingRect().width();
-                                qreal y1=checkLine->boundingRect().y()+checkLine->boundingRect().height();
+                                //qreal x0=checkLine->boundingRect().x();//без этих строк из за округления количество очков может превысить тысячу
+                                //qreal y0=checkLine->boundingRect().y();
+                                //qreal x1=checkLine->boundingRect().x()+checkLine->boundingRect().width();
+                                //qreal y1=checkLine->boundingRect().y()+checkLine->boundingRect().height();
                                 score-=qSqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0));
                             }
                             else
@@ -1050,7 +1059,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
         {
             if ((pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
             {
-                if (coordsStack.size()==1)
+                /*if (coordsStack.size()==1)
                 {
                     QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
                     QPointF temp1 = coordsStack.top();
@@ -1059,7 +1068,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
                     if(!ball->collidesWithItem(checkLine))//чтобы стена не проходила сквозь шар
                         tmpLine->setLine(temp1.x(), temp1.y(), pt.x(), pt.y());
                     delete checkLine;
-                }
+                }*/
             }
         }
     }

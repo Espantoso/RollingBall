@@ -8,8 +8,8 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-INCLUDEPATH += ../phy/Box2D/
-LIBS += -L"../phy/Box2D"
+INCLUDEPATH += ../RollingBall/Box2D/
+LIBS += -L"../RollingBall/Box2D"
 LIBS += -lBox2D
 
 TARGET = RollingBall
