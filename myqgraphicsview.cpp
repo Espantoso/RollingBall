@@ -969,29 +969,22 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
                             qreal x1=checkLine->boundingRect().x()+checkLine->boundingRect().width();
                             qreal y1=checkLine->boundingRect().y()+checkLine->boundingRect().height();
                             qreal length=qSqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0));
-                            delete checkLine;
                             QGraphicsLineItem *line;
                             if(length<score)
                             {
                                 line=createStaticLine(temp1.x(), temp1.y(), temp2.x(), temp2.y(), "user");
-                                //Вот тута ошибка
-                                //qreal x0=checkLine->boundingRect().x();//без этих строк из за округления количество очков может превысить тысячу
-                                //qreal y0=checkLine->boundingRect().y();
-                                //qreal x1=checkLine->boundingRect().x()+checkLine->boundingRect().width();
-                                //qreal y1=checkLine->boundingRect().y()+checkLine->boundingRect().height();
+                                x0=line->boundingRect().x();
+                                y0=line->boundingRect().y();
+                                x1=line->boundingRect().x()+line->boundingRect().width();
+                                y1=line->boundingRect().y()+line->boundingRect().height();
                                 score-=qSqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0));
+                                UpdateScore();
                             }
                             else
                             {
                                 scene->removeItem(tmpLine);
                                 QMessageBox::information(0,"","You can not add line whith such length while score is such small",QMessageBox::Ok|QMessageBox::NoButton);
                             }
-                            UpdateScore();
-                            b2BodyDef bodyDef;
-                            bodyDef.position.Set(temp1.x() / pixPerUnit, temp1.y() / pixPerUnit);
-                            b2Body *body = world->CreateBody(&bodyDef);
-                            body->SetUserData(line);
-                            //userObjects.append(body);
                             if (!coordsStack.empty())
                                 while (!coordsStack.empty())
                                     coordsStack.pop();
@@ -1004,7 +997,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             }
             if (!AddMode&&(pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
             {
-                QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x(), pt.y(), 1, 1);
+                QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x(), pt.y(), 3, 3);
                 for(int i=0; i<userObjects.length(); i++)
                 {
                     QGraphicsLineItem* item=reinterpret_cast<QGraphicsLineItem*>(userObjects.at(i)->GetUserData());
@@ -1060,7 +1053,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
         {
             if ((pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
             {
-                /*if (coordsStack.size()==1)
+                if (coordsStack.size()==1)
                 {
                     QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
                     QPointF temp1 = coordsStack.top();
@@ -1069,7 +1062,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
                     if(!ball->collidesWithItem(checkLine))//чтобы стена не проходила сквозь шар
                         tmpLine->setLine(temp1.x(), temp1.y(), pt.x(), pt.y());
                     delete checkLine;
-                }*/
+                }
             }
         }
     }
