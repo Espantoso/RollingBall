@@ -151,29 +151,50 @@ void MyQGraphicsView::createCircle(int x, int y, int r)
     shape.m_radius = r / pixPerUnit;
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &shape;
-    fixtureDef.density = 1.0f;
+	fixtureDef.density = 1.0f;
     fixtureDef.friction = 0.0f;
     fixtureDef.restitution = 1.0f; // прыгучесть
     body->CreateFixture(&fixtureDef);
     //
     ballPointer = body;
     ballDefPos = body->GetPosition();
-    //QPoint a;
-    //a.setX(x);a.setY(y);
-    //dynamicBodyDefaultParams params(body->GetAngle(), a, body);
-    //defParams<<params;
-    //
     QGraphicsEllipseItem *ellipse = new QGraphicsEllipseItem;
     ellipse->setPos(x, y);
     ellipse->setRect(-r, -r, r*2 ,r*2);
     scene->addItem(ellipse);
     //userGraphObjectsStack.push(ellipse);
-    body->ApplyLinearImpulse(b2Vec2(50, 0), b2Vec2(1, 1), 1);
+	body->ApplyLinearImpulse(b2Vec2(50, 0), b2Vec2(1, 1), 1);
     body->SetUserData(ellipse);
 
     bodyList<<body;
-    //userObjectsStack.push(body);
-    //numOfUserObjects++;
+}
+void MyQGraphicsView::createCircle(int x, int y, int r, float density, float friction, float restitution, b2Vec2 impulse, b2Vec2 point)
+{
+	b2BodyDef bodyDef;
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.angularDamping = 1.0f;
+	bodyDef.position.Set(x / pixPerUnit, y / pixPerUnit);
+	b2Body *body = world->CreateBody(&bodyDef);
+	b2CircleShape shape;
+	shape.m_radius = r / pixPerUnit;
+	b2FixtureDef fixtureDef;
+	fixtureDef.shape = &shape;
+	fixtureDef.density = density;//1.0f;
+	fixtureDef.friction = friction;// 0.0f;
+	fixtureDef.restitution = restitution;//1.0f; // прыгучесть
+	body->CreateFixture(&fixtureDef);
+	//
+	ballPointer = body;
+	ballDefPos = body->GetPosition();
+	//
+	QGraphicsEllipseItem *ellipse = new QGraphicsEllipseItem;
+	ellipse->setPos(x, y);
+	ellipse->setRect(-r, -r, r*2 ,r*2);
+	scene->addItem(ellipse);
+	body->ApplyLinearImpulse(impulse, point, 1);
+	body->SetUserData(ellipse);
+
+	bodyList<<body;
 }
 void MyQGraphicsView::updatePhysics()
 {
@@ -334,7 +355,6 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
 
     if (world != NULL)
     {
-        //world->~b2World();
         bodyList.clear();
         userObjects.clear();
         while (!coordsStack.empty())
@@ -351,14 +371,77 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     createStaticLine(winWidth-rightOffset, leftOffset, winWidth-rightOffset, winHeight-bottomOffset);//right border
     createStaticLine(leftOffset, topOffset, winWidth-rightOffset, leftOffset);//top border
 
-    createCircle(50, 50, 10);
+	b2Vec2 impulse(70, 0), point(1, 1);
+	createCircle(50, 50, 10, 1, 0, 1, impulse, point);
 
-    //numOfUserObjects = 0;//число объектов, добавленных игроком
-
-
-    timer = new QTimer(this);
+	timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updatePhysics()));
 }
+void MyQGraphicsView::LevelEditor(QGraphicsScene *scene, QGraphicsView *graphicsView)
+{
+	AddMode=true;
+	isInMenu=false;
+	simulation=false;
+	delete scene;
+	scene = new QGraphicsScene;
+	this->scene=scene;
+	//scene->setSceneRect(0, 0, 500, 500);
+	graphicsView->setScene(scene);
+	tmpLine=new QGraphicsLineItem;
+	scene->addItem(tmpLine);
+	scene->addRect(560, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+	QGraphicsTextItem *Start=new QGraphicsTextItem("Start");
+	Start->setFont(QFont("helvetica", 20));
+	Start->setPos(442, 45);
+	Start->setTextWidth(300);
+	Start->document()->setPageSize(QSizeF(300, 50));
+	Start->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+	scene->addItem(Start);
+	scene->addRect(560, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
+	scene->addLine(570, 110, 580, 100, QPen(Qt::gray, 3));
+	scene->addRect(600, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
+	scene->addLine(610, 110, 620, 100, QPen(Qt::red, 3));
+	scene->addLine(610, 100, 620, 110, QPen(Qt::red, 3));
+	scene->addRect(560, 140, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+	QGraphicsTextItem *RemoveAll=new QGraphicsTextItem("Remove all");
+	RemoveAll->setFont(QFont("helvetica", 12));
+	RemoveAll->setPos(455, 141);
+	RemoveAll->setTextWidth(300);
+	RemoveAll->document()->setPageSize(QSizeF(300, 50));
+	RemoveAll->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+	scene->addItem(RemoveAll);
+	/*Score=new QGraphicsTextItem("Score: "+QString::number(score));
+	Score->setFont(QFont("helvetica", 12));
+	Score->setPos(558, 181);
+	Score->setTextWidth(300);
+	Score->document()->setPageSize(QSizeF(300, 50));
+	Score->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+	scene->addItem(Score);*/
+	if (world != NULL)
+	{
+		bodyList.clear();
+		userObjects.clear();
+		while (!coordsStack.empty())
+			coordsStack.pop();
+	}
+	b2Vec2 gravity(0.0f, 0.0f);
+	world = new b2World(gravity);
+	world->SetAllowSleeping(true);
+	world->SetWarmStarting(true);
+
+	//playground
+	createStaticLine(leftOffset, topOffset, leftOffset, winHeight-bottomOffset);//left border
+	createStaticLine(leftOffset, winHeight-bottomOffset, winWidth-rightOffset, winHeight-bottomOffset);//bottom border
+	createStaticLine(winWidth-rightOffset, leftOffset, winWidth-rightOffset, winHeight-bottomOffset);//right border
+	createStaticLine(leftOffset, topOffset, winWidth-rightOffset, leftOffset);//top border
+
+	b2Vec2 impulse(200, 0), point(1, 1);
+	createCircle(50, 50, 10, 1, 0, 1, impulse, point);
+
+	timer = new QTimer(this);
+	connect(timer, SIGNAL(timeout()), this, SLOT(updatePhysics()));
+}
+
 void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
     isInChooseLevelMenu=true;
@@ -519,6 +602,7 @@ void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
     QPixmap *image=new QPixmap("images/MainMenu.jpg");
     QGraphicsPixmapItem *ImageItem=scene->addPixmap(*image);
     ImageItem->setPos(-image->width()/2+150, -image->height()/2);
+
     scene->addRect(0, -150, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *StartGame=new QGraphicsTextItem("Choose level");
     StartGame->setFont(QFont("helvetica", 20));
@@ -543,6 +627,14 @@ void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
     Quit->document()->setPageSize(QSizeF(300, 50));
     Quit->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(Quit);
+	scene->addRect(0, 150, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
+	QGraphicsTextItem *LevelEditor=new QGraphicsTextItem("Level editor");
+	LevelEditor->setFont(QFont("helvetica", 20));
+	LevelEditor->setPos(0, 150);
+	LevelEditor->setTextWidth(300);
+	LevelEditor->document()->setPageSize(QSizeF(300, 50));
+	LevelEditor->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+	scene->addItem(LevelEditor);
 }
 MyQGraphicsView::MyQGraphicsView(QWidget *parent):QGraphicsView(parent)
 {
@@ -694,6 +786,11 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             isInMainMenu=false;
             RecordsTable(scene, this);
         }
+		else if((pt.x()>0)&&(pt.x()<300)&&(pt.y()>150)&&(pt.y()<200))//Редактор уровней
+		{
+			isInMainMenu=false;
+			LevelEditor(scene, this);
+		}
         else if((pt.x()>0)&&(pt.x()<300)&&(pt.y()>50)&&(pt.y()<100))//Выход
             exit(0);
     }

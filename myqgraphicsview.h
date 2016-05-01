@@ -51,7 +51,8 @@ public:
     void Completed();
     void LaunchTime(QGraphicsScene *scene);
     void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
-    void RecordsTable(QGraphicsScene *scene, QGraphicsView *graphicsView);
+	void RecordsTable(QGraphicsScene *scene, QGraphicsView *graphicsView);
+	void LevelEditor(QGraphicsScene *scene, QGraphicsView *graphicsView);
 private:
     void createWorld(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void createPolygon(int x, int y, int width, int height);
@@ -59,6 +60,7 @@ private:
     void createLine(int x1, int y1, int x2, int y2);
     QGraphicsLineItem* createStaticLine(int x1, int y1, int x2, int y2, QString type="not user");
     void createCircle(int x, int y, int r);
+	void createCircle(int x, int y, int r, float density, float friction, float restitution, b2Vec2 impulse, b2Vec2 point);
     void deleteLastPlacedObject();
 
     static const int winWidth = 1024;
