@@ -1,8 +1,6 @@
 #include "myqgraphicsview.h"
 #include "mainwindow.h"
 #include "field.h"
-#include "ball.h"
-#include "wall.h"
 #include <QPointF>
 #include <QTextDocument>
 #include <QTimer>
@@ -15,40 +13,9 @@
 #include <QTextStream>
 #include <QSemaphore>
 #include <QMessageBox>
-Ball *ball;
-QGraphicsLineItem *lineLeft;
-QGraphicsLineItem *lineRight;
-QGraphicsLineItem *lineTop;
-QGraphicsLineItem *lineBottom;
-QGraphicsScene *GameScene;
-QTimer *timer=nullptr;
-QGraphicsRectItem *finish;
-const float WallWidth=5, DistBetweenWallEl=3, BallR=20;
-float PrevPointX=-100, PrevPointY;
-QPointF BallStartPos=QPointF(100, 100);
-float BallStartDir=270+45;
-Wall *wall=new Wall(WallWidth, Qt::gray);
-bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false, LeftButtonDown=false;
-bool isTimeLaunched, AddMode, isInChooseLevelMenu=false, isLevelListLoaded=false;
-QVector <QByteArray> level_names;
-int levels_number_on_inset, inset_number, cur_inset=1, cur_level;
-double score=1000;
-QGraphicsTextItem *Score=nullptr;
-bool isZeroScore=false, isInRecordsTable=false;
-QVector <QString> level_records;
-void UpdateScore()
-{
-    if(score<0)
-    {
-        Score->setPlainText("Score: "+QString::number(0));
-        isZeroScore=true;
-    }
-    else
-    {
-        Score->setPlainText("Score: "+QString::number(int(score)));
-        isZeroScore=false;
-    }
-}
+bool MyQGraphicsView::isLevelListLoaded=false;
+QVector <QString> MyQGraphicsView::level_records;
+QVector <QByteArray> MyQGraphicsView::level_names;
 class LevelListCreator:public QThread
 {
 public:
@@ -79,20 +46,33 @@ public:
                     }
                 }
                 QSemaphore sem(1);
-                level_names.append(level_name);
-                level_records.append(record);
+                MyQGraphicsView::level_names.append(level_name);
+                MyQGraphicsView::level_records.append(record);
                 sem.acquire(1);
                 file.close();
             }
             else
             {
-                isLevelListLoaded=true;
+                MyQGraphicsView::isLevelListLoaded=true;
                 break;
             }
             i++;
         }
     }
 };
+void MyQGraphicsView::UpdateScore()
+{
+    if(score<0)
+    {
+        Score->setPlainText("Score: "+QString::number(0));
+        isZeroScore=true;
+    }
+    else
+    {
+        Score->setPlainText("Score: "+QString::number(int(score)));
+        isZeroScore=false;
+    }
+}
 void MyQGraphicsView::createWorld(QGraphicsScene *scene, QGraphicsView *view)
 {
     view->setRenderHint(QPainter::Antialiasing);
@@ -593,7 +573,7 @@ void MyQGraphicsView::RestartGame(QGraphicsScene *scene, QGraphicsView *graphics
     Score->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
     scene->addItem(Score);
 }
-void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
+void MyQGraphicsView::MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
     isTimeLaunched=false;
     delete scene;
@@ -656,7 +636,7 @@ void MyQGraphicsView::BackToGame(QGraphicsScene *scene, QGraphicsView *graphicsV
     scene = GameScene;
     graphicsView->setScene(scene);
 }
-void SelectAddWallTool(QGraphicsScene *scene)
+void MyQGraphicsView::SelectAddWallTool(QGraphicsScene *scene)
 {
     AddMode=true;
     scene->addRect(560, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
@@ -665,7 +645,7 @@ void SelectAddWallTool(QGraphicsScene *scene)
     scene->addLine(610, 110, 620, 100, QPen(Qt::red, 3));
     scene->addLine(610, 100, 620, 110, QPen(Qt::red, 3));
 }
-void SelectRemoveWallTool(QGraphicsScene *scene)
+void MyQGraphicsView::SelectRemoveWallTool(QGraphicsScene *scene)
 {
     AddMode=false;
     scene->addRect(560, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
@@ -1164,7 +1144,7 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
         }
     }
 }
-void PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
+void MyQGraphicsView::PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
     isInMenu=true;
     GameScene=scene;
@@ -1343,78 +1323,4 @@ void MyQGraphicsView::Completed()
     Record->document()->setPageSize(QSizeF(300, 50));
     Record->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(Record);
-}
-qreal getAngle(QPointF BallPos, QPointF WallPos, double dir)
-{
-    double alpha=(qAtan(fabs(WallPos.y()-BallPos.y())/fabs(WallPos.x()-BallPos.x()))* 180)/M_PI;
-    if((WallPos.x()<BallPos.x())&&(WallPos.y()<BallPos.y()))
-        alpha=180-alpha;
-    else if((WallPos.x()<BallPos.x())&&(WallPos.y()>BallPos.y()))
-        alpha=180+alpha;
-    else if((WallPos.x()>BallPos.x())&&(WallPos.y()>BallPos.y()))
-        alpha=360-alpha;
-    double beta=qAcos(qCos(alpha*M_PI/180)*qCos(dir*M_PI/180)+qSin(alpha*M_PI/180)*qSin(dir*M_PI/180));
-    beta=beta*180/M_PI;
-    if(fabs(beta)>90)
-        return dir;
-    double gamma=alpha-dir;
-    return dir+180+2*gamma;
-}
-void MyQGraphicsView::slot_timerOut()
-{
-    if(ball->collidesWithItem(finish))
-        Completed();
-    else if(ball->collidesWithItem(lineLeft))
-    {
-        if(!((ball->getDir()<90)||(ball->getDir()>270)))
-        {
-            qreal angle = 90 + (90 - ball->getDir());
-            ball->setDir(angle);
-        }
-    }
-    else if(ball->collidesWithItem(lineRight))
-    {
-        if(!((ball->getDir()>90)&&(ball->getDir()<270)))
-        {
-            qreal angle = 270 + (270 - ball->getDir());
-            ball->setDir(angle);
-        }
-    }
-    else if(ball->collidesWithItem(lineTop))
-    {
-        if(!(ball->getDir()>180))
-            ball->setDir(- ball->getDir());
-    }
-    else if(ball->collidesWithItem(lineBottom))
-    {
-        if(!(ball->getDir()<180))
-        {
-            qreal angle = 180 + (180 - ball->getDir());
-            ball->setDir(angle);
-        }
-    }
-    for(int i = 0; i < wall->getWallLength(); i++)
-    {
-        if(ball->collidesWithItem(wall->getWallPoint(i)))
-        {
-            float Ballx=ball->pos().x();
-            float Bally=ball->pos().y();
-            float min=1000000;
-            QPointF NearestPoint;
-            for(int j=0; j<wall->getWallLength(); j++)
-            {
-                float Wallx=wall->getWallPointCenter(j).x();
-                float Wally=wall->getWallPointCenter(j).y();
-                float distance=qSqrt((Ballx-Wallx)*(Ballx-Wallx)+(Bally-Wally)*(Bally-Wally));
-                if(distance<min)
-                {
-                    min=distance;
-                    NearestPoint=wall->getWallPointCenter(j);
-                }
-            }
-            qreal angle = getAngle(ball->pos(), NearestPoint, ball->getDir());
-            ball->setDir(angle);
-        }
-    }
-    emit signal_moveToNextPosition();
 }

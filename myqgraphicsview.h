@@ -53,6 +53,14 @@ public:
     void RestartGame(QGraphicsScene *scene, QGraphicsView *graphicsView);
 	void RecordsTable(QGraphicsScene *scene, QGraphicsView *graphicsView);
 	void LevelEditor(QGraphicsScene *scene, QGraphicsView *graphicsView);
+    void UpdateScore();
+    void MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsView);
+    void SelectAddWallTool(QGraphicsScene *scene);
+    void SelectRemoveWallTool(QGraphicsScene *scene);
+    void PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsView);
+    static bool isLevelListLoaded;
+    static QVector <QString> level_records;
+    static QVector <QByteArray> level_names;
 private:
     void createWorld(QGraphicsScene *scene, QGraphicsView *graphicsView);
     void createPolygon(int x, int y, int width, int height);
@@ -62,7 +70,23 @@ private:
     void createCircle(int x, int y, int r);
 	void createCircle(int x, int y, int r, float density, float friction, float restitution, b2Vec2 impulse, b2Vec2 point);
     void deleteLastPlacedObject();
-
+    QGraphicsLineItem *lineLeft;
+    QGraphicsLineItem *lineRight;
+    QGraphicsLineItem *lineTop;
+    QGraphicsLineItem *lineBottom;
+    QGraphicsScene *GameScene;
+    QTimer *timer=nullptr;
+    QGraphicsRectItem *finish;
+    const float WallWidth=5, DistBetweenWallEl=3, BallR=20;
+    float PrevPointX=-100, PrevPointY;
+    QPointF BallStartPos=QPointF(100, 100);
+    float BallStartDir=270+45;
+    bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false, LeftButtonDown=false;
+    bool isTimeLaunched, AddMode, isInChooseLevelMenu=false;
+    int levels_number_on_inset, inset_number, cur_inset=1, cur_level;
+    double score=1000;
+    QGraphicsTextItem *Score=nullptr;
+    bool isZeroScore=false, isInRecordsTable=false;
     static const int winWidth = 1024;
     static const int winHeight = 768;
     static const int rightOffset = 500, bottomOffset = 100, leftOffset = 20, topOffset = 20;
@@ -100,6 +124,5 @@ public slots:
     //void mouseDoubleClickEvent(QMouseEvent * e);
     void mouseMoveEvent(QMouseEvent * e);
     void keyPressEvent(QKeyEvent *e);
-    void slot_timerOut();
 };
 #endif // MYQGRAPHICSVIEW_H
