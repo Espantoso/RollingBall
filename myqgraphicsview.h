@@ -58,6 +58,7 @@ public:
     void SelectAddWallTool(QGraphicsScene *scene);
     void SelectRemoveWallTool(QGraphicsScene *scene);
     void PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsView);
+    void DrawButton(QGraphicsScene *scene, qreal x, qreal y, qreal w, qreal h, const char *Text);
     static bool isLevelListLoaded;
     static QVector <QString> level_records;
     static QVector <QByteArray> level_names;
