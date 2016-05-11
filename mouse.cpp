@@ -16,12 +16,12 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             isInMainMenu=false;
             RecordsTable(scene, this);
         }
-        else if((pt.x()>0)&&(pt.x()<300)&&(pt.y()>150)&&(pt.y()<200))//Редактор уровней
+        else if((pt.x()>0)&&(pt.x()<300)&&(pt.y()>50)&&(pt.y()<100))//Редактор уровней
         {
             isInMainMenu=false;
             LevelEditor(scene, this);
         }
-        else if((pt.x()>0)&&(pt.x()<300)&&(pt.y()>50)&&(pt.y()<100))//Выход
+        else if((pt.x()>0)&&(pt.x()<300)&&(pt.y()>150)&&(pt.y()<200))//Выход
             exit(0);
     }
     else if(isInPauseMenu)
@@ -222,7 +222,11 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             }
         }
     }
-    else//уровень, таймер запущен
+    else if(isInLevelEditor)
+    {
+
+    }
+    else//уровень, таймер не запущен
     {
         if((pt.x()>560)&&(pt.x()<655)&&(pt.y()>50)&&(pt.y()<80))
         {
@@ -353,6 +357,13 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
     else if(isInChooseLevelMenu)
     {
 
+    }
+    else if(isInLevelEditor)
+    {
+        if(LeftButtonDown)
+        {
+
+        }
     }
     else//уровень
     {

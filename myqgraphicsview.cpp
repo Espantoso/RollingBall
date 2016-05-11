@@ -190,8 +190,9 @@ void MyQGraphicsView::createCircle(int x, int y, int r, float density, float fri
 }
 void MyQGraphicsView::updatePhysics()
 {
-    std::cout<<"begin";
-    std::cout.flush();
+    QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
+    if(ball->collidesWithItem(finish))
+        Completed();
     if (!bodyList.isEmpty())
     {
         QGraphicsItem *item;
@@ -205,47 +206,27 @@ void MyQGraphicsView::updatePhysics()
         {
             body = *bodyListIt++;
             item = reinterpret_cast<QGraphicsItem*>(body->GetUserData());
-            std::cout<<"1";
-            std::cout.flush();
-            std::cout<<item;
-            std::cout.flush();
-            std::cout<<"Length: "<<bodyList.length()<<"\n";
-            std::cout.flush();
             item->type();
-            std::cout<<item;
-            std::cout.flush();
             switch (item->type())
             {
-            case 3:                 std::cout<<"3begin";
-                std::cout.flush();rect = reinterpret_cast<QGraphicsRectItem*>(item);
+            case 3:
+                rect = reinterpret_cast<QGraphicsRectItem*>(item);
                 rect->setPos(body->GetPosition().x * pixPerUnit, body->GetPosition().y * pixPerUnit);
                 rect->setRotation(body->GetAngle());
-                std::cout<<"3end";
-                std::cout.flush();
                 break;
-            case 4: std::cout<<"4begin";
-                std::cout.flush();ellipse = reinterpret_cast<QGraphicsEllipseItem*>(item);
+            case 4:
+                ellipse = reinterpret_cast<QGraphicsEllipseItem*>(item);
                 ellipse->setPos(body->GetPosition().x * pixPerUnit, body->GetPosition().y * pixPerUnit);
                 ellipse->setRotation(body->GetAngle());
-                std::cout<<"4end";
-                std::cout.flush();
                 break;
-            case 5: std::cout<<"5begin";
-                std::cout.flush();line = reinterpret_cast<QGraphicsLineItem*>(item);
+            case 5:
+                line = reinterpret_cast<QGraphicsLineItem*>(item);
                 line->setPos(body->GetPosition().x * pixPerUnit, body->GetPosition().y * pixPerUnit);
                 line->setRotation(body->GetAngle());
-                std::cout<<"5end";
-                std::cout.flush();
                 break;
-            default:            std::cout<<"6";
-                std::cout.flush();
             }
-            std::cout<<"7";
-            std::cout.flush();
         }
     }
-    std::cout<<"end";
-    std::cout.flush();
 }
 void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView, QFile *file)
 {
@@ -292,18 +273,6 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
         Record->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
         scene->addItem(Record);
         scene->addItem(LevelName);
-        while(!instream.atEnd())
-        {
-            QString line=instream.readLine();
-            level_properties+=line;
-        }
-        QGraphicsTextItem *Levelprp=new QGraphicsTextItem(level_properties);
-        Levelprp->setFont(QFont("helvetica", 12));
-        Levelprp->setPos(625, 200);
-        Levelprp->setTextWidth(300);
-        Levelprp->document()->setPageSize(QSizeF(300, 50));
-        Levelprp->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-        scene->addItem(Levelprp);
         file->close();
     }
     else
@@ -362,15 +331,15 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     createStaticLine(leftOffset, winHeight-bottomOffset, winWidth-rightOffset, winHeight-bottomOffset);//bottom border
     createStaticLine(winWidth-rightOffset, leftOffset, winWidth-rightOffset, winHeight-bottomOffset);//right border
     createStaticLine(leftOffset, topOffset, winWidth-rightOffset, leftOffset);//top border
-
+    finish=scene->addRect(finish_x, finish_y, finish_w, finish_h, QPen(Qt::green), QBrush(Qt::green));
 	b2Vec2 impulse(70, 0), point(1, 1);
 	createCircle(50, 50, 10, 1, 0, 1, impulse, point);
-
 	timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updatePhysics()));
 }
 void MyQGraphicsView::LevelEditor(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
+    isInLevelEditor=true;
 	AddMode=true;
 	isInMenu=false;
 	simulation=false;
@@ -511,13 +480,6 @@ void MyQGraphicsView::RestartGame(QGraphicsScene *scene, QGraphicsView *graphics
         Record->document()->setPageSize(QSizeF(300, 50));
         Record->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
         scene->addItem(Record);
-        QGraphicsTextItem *Levelprp=new QGraphicsTextItem(level_properties);
-        Levelprp->setFont(QFont("helvetica", 12));
-        Levelprp->setPos(625, 200);
-        Levelprp->setTextWidth(300);
-        Levelprp->document()->setPageSize(QSizeF(300, 50));
-        Levelprp->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-        scene->addItem(Levelprp);
         file->close();
     }
     timer->stop();
@@ -568,8 +530,8 @@ void MyQGraphicsView::MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsVie
     ImageItem->setPos(-image->width()/2+150, -image->height()/2);
     DrawButton(scene, 0, -150, 300, 50, "Choose level");
     DrawButton(scene, 0, -50, 300, 50, "Records table");
-    DrawButton(scene, 0, 50, 300, 50, "Exit");
-    DrawButton(scene, 0, 150, 300, 50, "Level editor");
+    DrawButton(scene, 0, 50, 300, 50, "Level editor");
+    DrawButton(scene, 0, 150, 300, 50, "Exit");
 }
 MyQGraphicsView::MyQGraphicsView(QWidget *parent):QGraphicsView(parent)
 {
@@ -704,22 +666,16 @@ void MyQGraphicsView::PauseMenu(QGraphicsScene *scene, QGraphicsView *graphicsVi
     GameScene=scene;
     scene = new QGraphicsScene;
     graphicsView->setScene(scene);
-    scene->addRect(0, -25, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
-    QGraphicsTextItem *MainMenu=new QGraphicsTextItem("Main menu");
-    MainMenu->setFont(QFont("helvetica", 20));
-    MainMenu->setPos(0, -25);
-    MainMenu->setTextWidth(300);
-    MainMenu->document()->setPageSize(QSizeF(300, 50));
-    MainMenu->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-    scene->addItem(MainMenu);
-    scene->addRect(0, 75, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
-    QGraphicsTextItem *Quit=new QGraphicsTextItem("Exit");
-    Quit->setFont(QFont("helvetica", 20));
-    Quit->setPos(0, 75);
-    Quit->setTextWidth(300);
-    Quit->document()->setPageSize(QSizeF(300, 50));
-    Quit->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-    scene->addItem(Quit);
+    /*scene->addRect(0, -125, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *ReturnToGame=new QGraphicsTextItem("Back to game");
+    ReturnToGame->setFont(QFont("helvetica", 20));
+    ReturnToGame->setPos(0, -125);
+    ReturnToGame->setTextWidth(300);
+    ReturnToGame->document()->setPageSize(QSizeF(300, 50));
+    ReturnToGame->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(ReturnToGame);*/
+    DrawButton(scene, 0, -25, 300, 50, "Main menu");
+    DrawButton(scene, 0, 75, 300, 50, "Exit");
 }
 void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
 {
@@ -801,32 +757,9 @@ void MyQGraphicsView::Completed()
     Completed->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
     scene->addItem(Completed);
     if(cur_level!=level_names.length())
-    {
-        scene->addRect(0, 50, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
-        QGraphicsTextItem *NextLevel=new QGraphicsTextItem("Next Level");
-        NextLevel->setFont(QFont("helvetica", 20));
-        NextLevel->setPos(0, 50);
-        NextLevel->setTextWidth(300);
-        NextLevel->document()->setPageSize(QSizeF(300, 50));
-        NextLevel->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-        scene->addItem(NextLevel);
-    }
-    scene->addRect(0, 150, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
-    QGraphicsTextItem *Restart=new QGraphicsTextItem("Restart");
-    Restart->setFont(QFont("helvetica", 20));
-    Restart->setPos(0, 150);
-    Restart->setTextWidth(300);
-    Restart->document()->setPageSize(QSizeF(300, 50));
-    Restart->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-    scene->addItem(Restart);
-    scene->addRect(0, 250, 300, 50, QPen(Qt::gray), QBrush(Qt::gray));
-    QGraphicsTextItem *MainMenu=new QGraphicsTextItem("Main menu");
-    MainMenu->setFont(QFont("helvetica", 20));
-    MainMenu->setPos(0, 250);
-    MainMenu->setTextWidth(300);
-    MainMenu->document()->setPageSize(QSizeF(300, 50));
-    MainMenu->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-    scene->addItem(MainMenu);
+        DrawButton(scene, 0, 50, 300, 50, "Next level");
+    DrawButton(scene, 0, 150, 300, 50, "Restart");
+    DrawButton(scene, 0, 250, 300, 50, "Next menu");
     QFile input(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
     QFile output("levels/output.txt");
     input.open(QIODevice::ReadOnly);
@@ -850,12 +783,12 @@ void MyQGraphicsView::Completed()
         outstream<<line+"\r\n";
     }
     if(score>=record)
-        outstream<<"Record: "+QString::number(score)+"\r\n";
+        outstream<<"Record: "+QString::number(int(score))+"\r\n";
     input.close();
     output.close();
     input.remove();
     output.rename(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
-    QGraphicsTextItem *Score=new QGraphicsTextItem("Score: "+QString::number(score));
+    QGraphicsTextItem *Score=new QGraphicsTextItem("Score: "+QString::number(int(score)));
     Score->setFont(QFont("helvetica", 12));
     Score->setPos(0, -54);
     Score->setTextWidth(300);

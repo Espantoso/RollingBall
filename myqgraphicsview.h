@@ -75,15 +75,16 @@ private:
     QGraphicsLineItem *lineRight;
     QGraphicsLineItem *lineTop;
     QGraphicsLineItem *lineBottom;
+    QGraphicsRectItem *finish;
     QGraphicsScene *GameScene;
     QTimer *timer=nullptr;
-    QGraphicsRectItem *finish;
+    qreal finish_x=250, finish_y=250, finish_w=50, finish_h=50;
     const float WallWidth=5, DistBetweenWallEl=3, BallR=20;
     float PrevPointX=-100, PrevPointY;
     QPointF BallStartPos=QPointF(100, 100);
     float BallStartDir=270+45;
     bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false, LeftButtonDown=false;
-    bool isTimeLaunched, AddMode, isInChooseLevelMenu=false;
+    bool isTimeLaunched, AddMode, isInChooseLevelMenu=false, isInLevelEditor=false;
     int levels_number_on_inset, inset_number, cur_inset=1, cur_level;
     double score=1000;
     QGraphicsTextItem *Score=nullptr;
