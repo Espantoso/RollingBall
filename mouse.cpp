@@ -44,6 +44,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
     {
         if((cur_level!=level_names.length())&&(pt.x()>0)&&((pt.x()<300))&&(pt.y()>50)&&((pt.y()<100)))//Следующий уровень
         {
+			score=1000;
             isInCompletedMenu=false;
             cur_level++;
             QFile *file=new QFile(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
@@ -51,6 +52,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
         }
         if((pt.x()>0)&&((pt.x()<300))&&(pt.y()>150)&&((pt.y()<200)))//Рестарт
         {
+			score=1000;
             isInCompletedMenu=false;
             QFile *file=new QFile(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
             StartGame(scene, this, file);
@@ -362,7 +364,10 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
     {
         if(LeftButtonDown)
         {
-
+			QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
+			QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x(), pt.y(), 1, 1);
+			if(ball->collidesWithItem(checkCircle))
+				ball->setPos(pt.x(), pt.y());
         }
     }
     else//уровень

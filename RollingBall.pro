@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     field.cpp \
     myqgraphicsview.cpp \
     ball.cpp \
-    wall.cpp
+    wall.cpp \
+    mouse.cpp \
 
 HEADERS  += mainwindow.h \
     field.h \

@@ -342,22 +342,27 @@ void MyQGraphicsView::LevelEditor(QGraphicsScene *scene, QGraphicsView *graphics
     isInLevelEditor=true;
 	AddMode=true;
 	isInMenu=false;
-	simulation=false;
-	delete scene;
 	scene = new QGraphicsScene;
 	this->scene=scene;
 	//scene->setSceneRect(0, 0, 500, 500);
 	graphicsView->setScene(scene);
 	tmpLine=new QGraphicsLineItem;
+	QGraphicsTextItem *SetDir=new QGraphicsTextItem("Set ball direction: ");
+	SetDir->setFont(QFont("helvetica", 10));
+	SetDir->setPos(555, 40);
+	SetDir->setTextWidth(200);
+	SetDir->document()->setPageSize(QSizeF(200, 50));
+	SetDir->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+	scene->addItem(SetDir);
+	scene->addRect(560, 65, 60, 15, QPen(Qt::black), QBrush(Qt::white));
+	QGraphicsTextItem *Dir=new QGraphicsTextItem("0");
+	Dir->setFont(QFont("helvetica", 10));
+	Dir->setPos(560, 60);
+	Dir->setTextWidth(200);
+	Dir->document()->setPageSize(QSizeF(200, 25));
+	Dir->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+	scene->addItem(Dir);
 	scene->addItem(tmpLine);
-	scene->addRect(560, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
-	QGraphicsTextItem *Start=new QGraphicsTextItem("Start");
-	Start->setFont(QFont("helvetica", 20));
-	Start->setPos(442, 45);
-	Start->setTextWidth(300);
-	Start->document()->setPageSize(QSizeF(300, 50));
-	Start->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-	scene->addItem(Start);
 	scene->addRect(560, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
 	scene->addLine(570, 110, 580, 100, QPen(Qt::gray, 3));
 	scene->addRect(600, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
@@ -398,9 +403,6 @@ void MyQGraphicsView::LevelEditor(QGraphicsScene *scene, QGraphicsView *graphics
 
 	b2Vec2 impulse(200, 0), point(1, 1);
 	createCircle(50, 50, 10, 1, 0, 1, impulse, point);
-
-	timer = new QTimer(this);
-	connect(timer, SIGNAL(timeout()), this, SLOT(updatePhysics()));
 }
 
 void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphicsView)
@@ -713,6 +715,10 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
     {
 
     }
+	else if(isInLevelEditor)
+	{
+
+	}
     else//уровень
     {
         if (key == Qt::Key_Space)
