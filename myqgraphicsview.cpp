@@ -355,13 +355,19 @@ void MyQGraphicsView::LevelEditor(QGraphicsScene *scene, QGraphicsView *graphics
 	SetDir->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
 	scene->addItem(SetDir);
 	scene->addRect(560, 65, 60, 15, QPen(Qt::black), QBrush(Qt::white));
-	QGraphicsTextItem *Dir=new QGraphicsTextItem("0");
-	Dir->setFont(QFont("helvetica", 10));
-	Dir->setPos(560, 60);
-	Dir->setTextWidth(200);
-	Dir->document()->setPageSize(QSizeF(200, 25));
-	Dir->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
-	scene->addItem(Dir);
+    for(int i=0; i<8; i++)
+    {
+    textDir.append(new QGraphicsTextItem("0"));
+    textDir.at(i)->setFont(QFont("helvetica", 10));
+    textDir.at(i)->setPos(559+7*i, 60);
+    textDir.at(i)->setTextWidth(200);
+    textDir.at(i)->document()->setPageSize(QSizeF(200, 25));
+    textDir.at(i)->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+    scene->addItem(textDir.at(i));
+    }
+    int i=0;
+    cursor=new QGraphicsLineItem(562.5+7*i, 67, 562.5+7*i, 78);
+    scene->addItem(cursor);
 	scene->addItem(tmpLine);
 	scene->addRect(560, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
 	scene->addLine(570, 110, 580, 100, QPen(Qt::gray, 3));

@@ -96,6 +96,8 @@ private:
     static constexpr float32 timeStep = 60.0f;
     static const int32 velocityIterations = 8;
     static const int32 positionIterations = 3;
+    QVector <QGraphicsTextItem*> textDir;
+    QGraphicsLineItem *cursor;
 
     //QTimer *timer;
     b2World *world;

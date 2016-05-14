@@ -226,7 +226,11 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
     }
     else if(isInLevelEditor)
     {
+        //560, 65, 60, 15
+        if((pt.x()>560)&&(pt.y()<620)&&(pt.y()>65)&&(pt.y()<80))
+        {
 
+        }
     }
     else//уровень, таймер не запущен
     {
@@ -367,7 +371,8 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
 			QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
 			QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x(), pt.y(), 1, 1);
 			if(ball->collidesWithItem(checkCircle))
-				ball->setPos(pt.x(), pt.y());
+                if((pt.x()<winWidth-rightOffset-9)&&(pt.x()>leftOffset+9)&&(pt.y()<winHeight-bottomOffset-9)&&(pt.y()>topOffset+9))
+                    ball->setPos(pt.x(), pt.y());
         }
     }
     else//уровень
