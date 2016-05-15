@@ -1,5 +1,50 @@
 #include "myqgraphicsview.h"
 #include <QMessageBox>
+#include <math.h>
+class LevelListCreator:public QThread
+{
+public:
+    void run()
+    {
+        int i=1;
+        while(true)
+        {
+            QFile file(QString("levels/level")+QString::number(i)+QString(".txt"));
+            if((file.open(QIODevice::ReadOnly))&&(i<=100))
+            {
+                QByteArray level_name=file.readLine();
+                //почему-то иногда название уровня не считывается
+                //для исправления этого нужен этот цикл с кодом первой буквы названия уровня
+                while(level_name.data()[0]!=108)//108 - код буквы l
+                    level_name=file.readLine();//прочитаем название уровня ещё раз
+                QTextStream instream(&file);
+                QString record="-";
+                while(!instream.atEnd())
+                {
+                    QString line=instream.readLine();
+                    QString begin=line.mid(0,7);
+                    if(begin=="Record:")
+                    {
+                        int i;
+                        for(i=7; !(line.at(i).isDigit()); i++);
+                        record=line.mid(i);
+                    }
+                }
+                QSemaphore sem(1);
+                MyQGraphicsView::level_names.append(level_name);
+                MyQGraphicsView::level_records.append(record);
+                sem.acquire(1);
+                file.close();
+            }
+            else
+            {
+                MyQGraphicsView::isLevelListLoaded=true;
+                break;
+            }
+            i++;
+        }
+    }
+};
 void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
 {
     LeftButtonDown=true;
@@ -226,10 +271,116 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
     }
     else if(isInLevelEditor)
     {
-        //560, 65, 60, 15
-        if((pt.x()>560)&&(pt.y()<620)&&(pt.y()>65)&&(pt.y()<80))
+        if((pt.x()>560)&&(pt.x()<620)&&(pt.y()>65)&&(pt.y()<80))//перемещение курсора
         {
-
+            float min_d=1000;
+            int min_d_index;
+            for(int i=0; i<=textDir.length(); i++)
+            {
+                int d=fabs(pt.x()-562.5-7*i);
+                if(d<min_d)
+                {
+                    min_d=d;
+                    min_d_index=i;
+                }
+            }
+            delete cursor;
+            cursor=new QGraphicsLineItem(562.5+7*min_d_index, 67, 562.5+7*min_d_index, 78);
+            cursor_pos=min_d_index;
+            scene->addItem(cursor);
+        }
+        else if((pt.x()>-200)&&(pt.x()<0)&&(pt.y()>700)&&(pt.y()<750))//назад
+        {
+            isInLevelEditor=false;
+            isInMainMenu=true;
+            MainMenu(scene, this);
+        }
+        else if((pt.x()>560)&&(pt.x()<590)&&(pt.y()>90)&&(pt.y()<120))
+        {
+            SelectAddWallTool(scene);
+            return;
+        }
+        else if((pt.x()>600)&&(pt.x()<630)&&(pt.y()>90)&&(pt.y()<120))
+        {
+            SelectRemoveWallTool(scene);
+            return;
+        }
+        else if((pt.x()>560)&&(pt.x()<655)&&(pt.y()>140)&&(pt.y()<170))//Удалить все стены
+        {
+            for(int i=0; i<levelObjects.length();)
+            {
+                QGraphicsItem* item=reinterpret_cast<QGraphicsItem*>(levelObjects.at(i)->GetUserData());
+                world->DestroyBody(levelObjects.at(i));
+                levelObjects.removeAt(i);
+                scene->removeItem(item);
+            }
+            scene->removeItem(tmpLine);
+            return;
+        }
+        if (AddMode&&(pt.x()>leftOffset && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset && pt.y()<winHeight-bottomOffset))
+        {
+            QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
+            QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x(), pt.y(), 1, 1);
+            if((!ball->collidesWithItem(checkCircle))&&(!finish->collidesWithItem(checkCircle)))//если пользователь нажал не на шар
+            {
+                coordsStack.push(pt);
+                if (coordsStack.size()==2)
+                {
+                    QPointF temp1 = coordsStack.top();
+                    point1.append(temp1);
+                    coordsStack.pop();
+                    QPointF temp2 = coordsStack.top();
+                    point2.append(temp2);
+                    QGraphicsLineItem *line;
+                    line=createStaticLine(temp1.x(), temp1.y(), temp2.x(), temp2.y(), "level");
+                    if (!coordsStack.empty())
+                        while (!coordsStack.empty())
+                    coordsStack.pop();
+                }
+            }
+            delete checkCircle;
+        }
+        if (!AddMode&&(pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
+        {
+            QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x()-3, pt.y()-3, 6, 6);
+            for(int i=0; i<levelObjects.length(); i++)
+            {
+                QGraphicsLineItem* item=reinterpret_cast<QGraphicsLineItem*>(levelObjects.at(i)->GetUserData());
+                if(item->collidesWithItem(checkCircle))
+                {
+                    world->DestroyBody(levelObjects.at(i));
+                    levelObjects.removeAt(i);
+                    scene->removeItem(item);
+                    scene->removeItem(tmpLine);
+                }
+            }
+            delete checkCircle;
+        }
+        else if((pt.x()>560)&&(pt.x()<655)&&(pt.y()>175)&&(pt.y()<205))//сохранить
+        {
+            QFile output(QString("levels/level")+QString::number(level_names.length()+1)+QString(".txt"));
+            output.open(QIODevice::WriteOnly);
+            QTextStream outstream(&output);
+            outstream<<"level"+QString::number(level_names.length()+1)+"\r\n";
+            QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
+            outstream<<"Ball position: "+QString::number(ball->x())+"; "+QString::number(ball->y())+"\r\n";
+            delete ball;
+            QString *ballDir=new QString();
+            for(int i=0; i<textDir.length(); i++)
+                (*ballDir)+=textDir.at(i)->toPlainText();
+            outstream<<"Ball direction: "+(*ballDir)+"\r\n";
+            for(int i=0; i<levelObjects.length(); i++)
+                outstream<<"Line"+QString::number(i)+": "+QString::number(point1.at(i).x())+"; "+QString::number(point1.at(i).y())+"; "+QString::number(point2.at(i).x())+"; "+QString::number(point2.at(i).y())+"\r\n";
+            delete ballDir;
+            outstream<<"Finish: "+QString::number(finish->boundingRect().x())+"; "+QString::number(finish->boundingRect().y())+"\r\n";
+            output.close();
+            level_names.clear();
+            level_records.clear();
+            LevelListCreator level_list_creator;
+            level_list_creator.start();
+            isInLevelEditor=false;
+            isInMainMenu=true;
+            MainMenu(scene, this);
         }
     }
     else//уровень, таймер не запущен
@@ -300,7 +451,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
                             else
                             {
                                 scene->removeItem(tmpLine);
-                                QMessageBox::information(0,"","You can not add line whith such length while score is such small",QMessageBox::Ok|QMessageBox::NoButton);
+                                QMessageBox::information(0, "", "You can not add line whith such length while score is such small",QMessageBox::Ok|QMessageBox::NoButton);
                             }
                             if (!coordsStack.empty())
                                 while (!coordsStack.empty())
@@ -314,7 +465,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             }
             if (!AddMode&&(pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
             {
-                QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x(), pt.y(), 3, 3);
+                QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x()-1.5, pt.y()-1.5, 3, 3);
                 for(int i=0; i<userObjects.length(); i++)
                 {
                     QGraphicsLineItem* item=reinterpret_cast<QGraphicsLineItem*>(userObjects.at(i)->GetUserData());
@@ -371,8 +522,32 @@ void MyQGraphicsView::mouseMoveEvent(QMouseEvent * e)
 			QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
 			QGraphicsEllipseItem *checkCircle=new QGraphicsEllipseItem(pt.x(), pt.y(), 1, 1);
 			if(ball->collidesWithItem(checkCircle))
+            {
                 if((pt.x()<winWidth-rightOffset-9)&&(pt.x()>leftOffset+9)&&(pt.y()<winHeight-bottomOffset-9)&&(pt.y()>topOffset+9))
                     ball->setPos(pt.x(), pt.y());
+            }
+            else if(finish->collidesWithItem(checkCircle))
+            {
+                if((pt.x()<winWidth-rightOffset-finish_w/2)&&(pt.x()>leftOffset+finish_w/2)&&(pt.y()<winHeight-bottomOffset-finish_h/2)&&(pt.y()>topOffset+finish_h/2))
+                {
+                    delete finish;
+                    finish=scene->addRect(pt.x()-finish_w/2, pt.y()-finish_h/2, finish_w, finish_h, QPen(Qt::green), QBrush(Qt::green));
+                }
+            }
+            delete checkCircle;
+        }
+        if ((pt.x()>leftOffset  && pt.y()>topOffset) && (pt.x()<winWidth-rightOffset  && pt.y()<winHeight-bottomOffset))
+        {
+            if (coordsStack.size()==1)
+            {
+                QGraphicsItem *ball=reinterpret_cast<QGraphicsItem*>(ballPointer->GetUserData());
+                QPointF temp1 = coordsStack.top();
+                QGraphicsLineItem *checkLine=new QGraphicsLineItem(temp1.x(), temp1.y(), pt.x(), pt.y());
+                scene->addItem(tmpLine);
+                if(!ball->collidesWithItem(checkLine))//чтобы стена не проходила сквозь шар
+                    tmpLine->setLine(temp1.x(), temp1.y(), pt.x(), pt.y());
+                delete checkLine;
+            }
         }
     }
     else//уровень

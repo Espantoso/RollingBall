@@ -13,6 +13,7 @@
 #include <QTextStream>
 #include <QSemaphore>
 #include <QMessageBox>
+#include <math.h>
 bool MyQGraphicsView::isLevelListLoaded=false;
 QVector <QString> MyQGraphicsView::level_records;
 QVector <QByteArray> MyQGraphicsView::level_names;
@@ -127,6 +128,10 @@ QGraphicsLineItem* MyQGraphicsView::createStaticLine(int x1, int y1, int x2, int
         line->setPen(QPen(Qt::gray, 3));
         userObjects.append(body);
     }
+    else if(type=="level")
+    {
+        levelObjects.append(body);
+    }
     scene->addItem(line);
     //userGraphObjectsStack.push(line);
     body->SetUserData(line);
@@ -233,14 +238,27 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     AddMode=true;
     isInMenu=false;
     simulation=false;
+    levelObjects.clear();
     delete scene;
     scene = new QGraphicsScene;
     this->scene=scene;
+    if (world != NULL)
+    {
+        bodyList.clear();
+        userObjects.clear();
+        while (!coordsStack.empty())
+            coordsStack.pop();
+    }
+    b2Vec2 gravity(0.0f, 0.0f);
+    world = new b2World(gravity);
+    world->SetAllowSleeping(true);
+    world->SetWarmStarting(true);
     //scene->setSceneRect(0, 0, 500, 500);
     graphicsView->setScene(scene);
     tmpLine=new QGraphicsLineItem;
     scene->addItem(tmpLine);
-    if(file->open(QIODevice::ReadOnly))//вывод настроек уровня на экран для тестирования
+    qreal Ballx, Bally, Balldir;
+    if(file->open(QIODevice::ReadOnly))
     {
         QTextStream instream(file);
         QString level_name=instream.readLine();
@@ -257,7 +275,108 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
         {
             QString line=instream.readLine();
             level_properties+=line;
-            QString begin=line.mid(0,7);
+            QString begin=line.mid(0, 14);
+            if(begin=="Ball position:")
+            {
+                int i=15;
+                QString* Ballxstr=new QString();
+                while(line.at(i)!=';')
+                {
+                    (*Ballxstr)+=line.at(i);
+                    i++;
+                }
+                Ballx=Ballxstr->toFloat();
+                delete Ballxstr;
+                i++;
+                QString* Ballystr=new QString();
+                while(i<line.length())
+                {
+                    (*Ballystr)+=line.at(i);
+                    i++;
+                }
+                Bally=Ballystr->toFloat();
+                delete Ballystr;
+            }
+            begin=line.mid(0, 15);
+            if(begin=="Ball direction:")
+            {
+                int i=16;
+                QString* Balldirstr=new QString();
+                while(i<line.length())
+                {
+                    (*Balldirstr)+=line.at(i);
+                    i++;
+                }
+                Balldir=Balldirstr->toFloat();
+            }
+            begin=line.mid(0, 4);
+            if(begin=="Line")
+            {
+                qreal x1, y1, x2, y2;
+                int i=5;
+                while(line.at(i)!=':')
+                    i++;
+                i++;
+                QString* x1str=new QString();
+                while(line.at(i)!=';')
+                {
+                    (*x1str)+=line.at(i);
+                    i++;
+                }
+                x1=x1str->toFloat();
+                delete x1str;
+                i++;
+                QString* y1str=new QString();
+                while(line.at(i)!=';')
+                {
+                    (*y1str)+=line.at(i);
+                    i++;
+                }
+                y1=y1str->toFloat();
+                delete y1str;
+                i++;
+                QString* x2str=new QString();
+                while(line.at(i)!=';')
+                {
+                    (*x2str)+=line.at(i);
+                    i++;
+                }
+                x2=x2str->toFloat();
+                delete x2str;
+                i++;
+                QString* y2str=new QString();
+                while(i<line.length())
+                {
+                    (*y2str)+=line.at(i);
+                    i++;
+                }
+                y2=y2str->toFloat();
+                delete y2str;
+                createStaticLine(x1, y1, x2, y2, "level");
+            }
+            begin=line.mid(0,7);
+            if(begin=="Finish:")
+            {
+                int i=8;
+                QString* finish_xstr=new QString();
+                while(line.at(i)!=';')
+                {
+                    (*finish_xstr)+=line.at(i);
+                    i++;
+                }
+                finish_x=finish_xstr->toFloat();
+                delete finish_xstr;
+                i++;
+                QString* finish_ystr=new QString();
+                while(i<line.length())
+                {
+                    (*finish_ystr)+=line.at(i);
+                    i++;
+                }
+                finish_y=finish_ystr->toFloat();
+                delete finish_ystr;
+            }
+            begin=line.mid(0,7);
             if(begin=="Record:")
             {
                 Record->setPlainText(line);
@@ -314,6 +433,78 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     Score->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
     scene->addItem(Score);
 
+
+    //playground
+    createStaticLine(leftOffset, topOffset, leftOffset, winHeight-bottomOffset);//left border
+    createStaticLine(leftOffset, winHeight-bottomOffset, winWidth-rightOffset, winHeight-bottomOffset);//bottom border
+    createStaticLine(winWidth-rightOffset, leftOffset, winWidth-rightOffset, winHeight-bottomOffset);//right border
+    createStaticLine(leftOffset, topOffset, winWidth-rightOffset, leftOffset);//top border
+    finish=scene->addRect(finish_x, finish_y, finish_w, finish_h, QPen(Qt::green), QBrush(Qt::green));
+    b2Vec2 impulse(70*cos(3.1415*Balldir/180), -70*sin(3.1415*Balldir/180)), point(1, 1);
+    createCircle(Ballx, Bally, 10, 1, 0, 1, impulse, point);
+	timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(updatePhysics()));
+}
+void MyQGraphicsView::LevelEditor(QGraphicsScene *scene, QGraphicsView *graphicsView)
+{
+    isInLevelEditor=true;
+	AddMode=true;
+	isInMenu=false;
+    levelObjects.clear();
+	scene = new QGraphicsScene;
+	this->scene=scene;
+    scene->setSceneRect(100, 100, 500, 500);
+	graphicsView->setScene(scene);
+    DrawButton(scene, -200, 700, 200, 50, "Back");
+	tmpLine=new QGraphicsLineItem;
+	QGraphicsTextItem *SetDir=new QGraphicsTextItem("Set ball direction: ");
+	SetDir->setFont(QFont("helvetica", 10));
+	SetDir->setPos(555, 40);
+	SetDir->setTextWidth(200);
+	SetDir->document()->setPageSize(QSizeF(200, 50));
+	SetDir->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+	scene->addItem(SetDir);
+	scene->addRect(560, 65, 60, 15, QPen(Qt::black), QBrush(Qt::white));
+    textDir.clear();
+    textDir.append(new QGraphicsTextItem("0"));
+    textDir.at(0)->setFont(QFont("helvetica", 10));
+    textDir.at(0)->setPos(559, 60);
+    textDir.at(0)->setTextWidth(200);
+    textDir.at(0)->document()->setPageSize(QSizeF(200, 25));
+    textDir.at(0)->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+    scene->addItem(textDir.at(0));
+    cursor_pos=1;
+    cursor=new QGraphicsLineItem(562.5+7, 67, 562.5+7, 78);
+    scene->addItem(cursor);
+    QGraphicsTextItem *Degrees=new QGraphicsTextItem("degreaces (from 0 to 359, 0 - right direction, 90 - top)");
+    Degrees->setFont(QFont("helvetica", 10));
+    Degrees->setPos(595, 60);
+    Degrees->setTextWidth(300);
+    Degrees->document()->setPageSize(QSizeF(200, 50));
+    Degrees->document()->setDefaultTextOption(QTextOption(Qt::AlignRight | Qt::AlignVCenter));
+    scene->addItem(Degrees);
+	scene->addItem(tmpLine);
+	scene->addRect(560, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
+    scene->addLine(570, 110, 580, 100);
+	scene->addRect(600, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
+	scene->addLine(610, 110, 620, 100, QPen(Qt::red, 3));
+	scene->addLine(610, 100, 620, 110, QPen(Qt::red, 3));
+	scene->addRect(560, 140, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+	QGraphicsTextItem *RemoveAll=new QGraphicsTextItem("Remove all");
+	RemoveAll->setFont(QFont("helvetica", 12));
+	RemoveAll->setPos(455, 141);
+	RemoveAll->setTextWidth(300);
+	RemoveAll->document()->setPageSize(QSizeF(300, 50));
+	RemoveAll->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(RemoveAll);
+    scene->addRect(560, 175, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
+    QGraphicsTextItem *Save=new QGraphicsTextItem("Save");
+    Save->setFont(QFont("helvetica", 12));
+    Save->setPos(455, 176);
+    Save->setTextWidth(300);
+    Save->document()->setPageSize(QSizeF(300, 50));
+    Save->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
+    scene->addItem(Save);
     if (world != NULL)
     {
         bodyList.clear();
@@ -328,89 +519,13 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
 
     //playground
     createStaticLine(leftOffset, topOffset, leftOffset, winHeight-bottomOffset);//left border
-    createStaticLine(leftOffset, winHeight-bottomOffset, winWidth-rightOffset, winHeight-bottomOffset);//bottom border
-    createStaticLine(winWidth-rightOffset, leftOffset, winWidth-rightOffset, winHeight-bottomOffset);//right border
-    createStaticLine(leftOffset, topOffset, winWidth-rightOffset, leftOffset);//top border
-    finish=scene->addRect(finish_x, finish_y, finish_w, finish_h, QPen(Qt::green), QBrush(Qt::green));
-	b2Vec2 impulse(70, 0), point(1, 1);
-	createCircle(50, 50, 10, 1, 0, 1, impulse, point);
-	timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(updatePhysics()));
-}
-void MyQGraphicsView::LevelEditor(QGraphicsScene *scene, QGraphicsView *graphicsView)
-{
-    isInLevelEditor=true;
-	AddMode=true;
-	isInMenu=false;
-	scene = new QGraphicsScene;
-	this->scene=scene;
-	//scene->setSceneRect(0, 0, 500, 500);
-	graphicsView->setScene(scene);
-	tmpLine=new QGraphicsLineItem;
-	QGraphicsTextItem *SetDir=new QGraphicsTextItem("Set ball direction: ");
-	SetDir->setFont(QFont("helvetica", 10));
-	SetDir->setPos(555, 40);
-	SetDir->setTextWidth(200);
-	SetDir->document()->setPageSize(QSizeF(200, 50));
-	SetDir->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
-	scene->addItem(SetDir);
-	scene->addRect(560, 65, 60, 15, QPen(Qt::black), QBrush(Qt::white));
-    for(int i=0; i<8; i++)
-    {
-    textDir.append(new QGraphicsTextItem("0"));
-    textDir.at(i)->setFont(QFont("helvetica", 10));
-    textDir.at(i)->setPos(559+7*i, 60);
-    textDir.at(i)->setTextWidth(200);
-    textDir.at(i)->document()->setPageSize(QSizeF(200, 25));
-    textDir.at(i)->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
-    scene->addItem(textDir.at(i));
-    }
-    int i=0;
-    cursor=new QGraphicsLineItem(562.5+7*i, 67, 562.5+7*i, 78);
-    scene->addItem(cursor);
-	scene->addItem(tmpLine);
-	scene->addRect(560, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
-	scene->addLine(570, 110, 580, 100, QPen(Qt::gray, 3));
-	scene->addRect(600, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
-	scene->addLine(610, 110, 620, 100, QPen(Qt::red, 3));
-	scene->addLine(610, 100, 620, 110, QPen(Qt::red, 3));
-	scene->addRect(560, 140, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
-	QGraphicsTextItem *RemoveAll=new QGraphicsTextItem("Remove all");
-	RemoveAll->setFont(QFont("helvetica", 12));
-	RemoveAll->setPos(455, 141);
-	RemoveAll->setTextWidth(300);
-	RemoveAll->document()->setPageSize(QSizeF(300, 50));
-	RemoveAll->document()->setDefaultTextOption(QTextOption(Qt::AlignCenter | Qt::AlignVCenter));
-	scene->addItem(RemoveAll);
-	/*Score=new QGraphicsTextItem("Score: "+QString::number(score));
-	Score->setFont(QFont("helvetica", 12));
-	Score->setPos(558, 181);
-	Score->setTextWidth(300);
-	Score->document()->setPageSize(QSizeF(300, 50));
-	Score->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
-	scene->addItem(Score);*/
-	if (world != NULL)
-	{
-		bodyList.clear();
-		userObjects.clear();
-		while (!coordsStack.empty())
-			coordsStack.pop();
-	}
-	b2Vec2 gravity(0.0f, 0.0f);
-	world = new b2World(gravity);
-	world->SetAllowSleeping(true);
-	world->SetWarmStarting(true);
-
-	//playground
-	createStaticLine(leftOffset, topOffset, leftOffset, winHeight-bottomOffset);//left border
 	createStaticLine(leftOffset, winHeight-bottomOffset, winWidth-rightOffset, winHeight-bottomOffset);//bottom border
 	createStaticLine(winWidth-rightOffset, leftOffset, winWidth-rightOffset, winHeight-bottomOffset);//right border
-	createStaticLine(leftOffset, topOffset, winWidth-rightOffset, leftOffset);//top border
-
-	b2Vec2 impulse(200, 0), point(1, 1);
-	createCircle(50, 50, 10, 1, 0, 1, impulse, point);
+    createStaticLine(leftOffset, topOffset, winWidth-rightOffset, leftOffset);//top border
+    finish=scene->addRect(finish_x, finish_y, finish_w, finish_h, QPen(Qt::green), QBrush(Qt::green));
+    b2Vec2 impulse(200, 0), point(1, 1);
+    createCircle(50, 50, 10, 1, 0, 1, impulse, point);
 }
-
 void MyQGraphicsView::ChooseLevel(QGraphicsScene *scene, QGraphicsView *graphicsView)
 {
     isInChooseLevelMenu=true;
@@ -532,6 +647,8 @@ void MyQGraphicsView::MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsVie
     isTimeLaunched=false;
     delete scene;
     scene = new QGraphicsScene;
+    point1.clear();
+    point2.clear();
     graphicsView->setScene(scene);
     QPixmap *image=new QPixmap("images/MainMenu.jpg");
     QGraphicsPixmapItem *ImageItem=scene->addPixmap(*image);
@@ -543,8 +660,8 @@ void MyQGraphicsView::MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsVie
 }
 MyQGraphicsView::MyQGraphicsView(QWidget *parent):QGraphicsView(parent)
 {
-    LevelListCreator *level_list_creator=new LevelListCreator();
-    level_list_creator->start();
+    LevelListCreator level_list_creator;
+    level_list_creator.start();
     isInMenu=true;
     isInMainMenu=true;
     isInPauseMenu=false;
@@ -565,7 +682,7 @@ void MyQGraphicsView::SelectAddWallTool(QGraphicsScene *scene)
 {
     AddMode=true;
     scene->addRect(560, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
-    scene->addLine(570, 110, 580, 100, QPen(Qt::gray, 3));
+    scene->addLine(570, 110, 580, 100);
     scene->addRect(600, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
     scene->addLine(610, 110, 620, 100, QPen(Qt::red, 3));
     scene->addLine(610, 100, 620, 110, QPen(Qt::red, 3));
@@ -574,7 +691,7 @@ void MyQGraphicsView::SelectRemoveWallTool(QGraphicsScene *scene)
 {
     AddMode=false;
     scene->addRect(560, 90, 30, 30, QPen(Qt::black), QBrush(Qt::white));
-    scene->addLine(570, 110, 580, 100, QPen(Qt::gray, 3));
+    scene->addLine(570, 110, 580, 100);
     scene->addRect(600, 90, 30, 30, QPen(Qt::red), QBrush(Qt::white));
     scene->addLine(610, 110, 620, 100, QPen(Qt::red, 3));
     scene->addLine(610, 100, 620, 110, QPen(Qt::red, 3));
@@ -691,6 +808,7 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
     if((key==Qt::Key_Escape)&&(!isInMenu))
     {
         userObjects.clear();
+        levelObjects.clear();
         timer->stop();
         isInPauseMenu=true;
         timer->stop();
@@ -723,7 +841,72 @@ void MyQGraphicsView::keyPressEvent(QKeyEvent *e)
     }
 	else if(isInLevelEditor)
 	{
-
+        if((key>='0')&&(key<='9')&&(textDir.length()<8))//ввод
+        {
+            if(textDir.length()==0)
+            {
+                textDir.append(new QGraphicsTextItem(QString::number(key-'0')));
+                textDir.last()->setFont(QFont("helvetica", 10));
+                textDir.last()->setPos(559, 60);
+                textDir.last()->setTextWidth(200);
+                textDir.last()->document()->setPageSize(QSizeF(200, 25));
+                textDir.last()->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+                scene->addItem(textDir.last());
+                cursor_pos++;
+                delete cursor;
+                cursor=new QGraphicsLineItem(562.5+7*cursor_pos, 67, 562.5+7*cursor_pos, 78);
+                scene->addItem(cursor);
+            }
+            else
+            {
+                textDir.append(new QGraphicsTextItem(textDir.last()->toPlainText()));
+                textDir.last()->setFont(QFont("helvetica", 10));
+                textDir.last()->setPos(559+7*(textDir.length()-1), 60);
+                textDir.last()->setTextWidth(200);
+                textDir.last()->document()->setPageSize(QSizeF(200, 25));
+                textDir.last()->document()->setDefaultTextOption(QTextOption(Qt::AlignLeft | Qt::AlignVCenter));
+                scene->addItem(textDir.last());
+                for(int i=textDir.length()-3; i>=cursor_pos; i--)
+                    textDir.at(i+1)->setPlainText(textDir.at(i)->toPlainText());
+                textDir.at(cursor_pos)->setPlainText(QString::number(key-'0'));
+                cursor_pos++;
+                delete cursor;
+                cursor=new QGraphicsLineItem(562.5+7*cursor_pos, 67, 562.5+7*cursor_pos, 78);
+                scene->addItem(cursor);
+            }
+        }
+        else if((key==Qt::Key_Left)&&(cursor_pos>0))
+        {
+            cursor_pos--;
+            delete cursor;
+            cursor=new QGraphicsLineItem(562.5+7*cursor_pos, 67, 562.5+7*cursor_pos, 78);
+            scene->addItem(cursor);
+        }
+        else if((key==Qt::Key_Right)&&(cursor_pos<textDir.length()))
+        {
+            cursor_pos++;
+            delete cursor;
+            cursor=new QGraphicsLineItem(562.5+7*cursor_pos, 67, 562.5+7*cursor_pos, 78);
+            scene->addItem(cursor);
+        }
+        else if((key==Qt::Key_Backspace)&&(cursor_pos>0))
+        {
+            delete textDir.at(cursor_pos-1);
+            textDir.removeAt(cursor_pos-1);
+            cursor_pos--;
+            delete cursor;
+            cursor=new QGraphicsLineItem(562.5+7*cursor_pos, 67, 562.5+7*cursor_pos, 78);
+            scene->addItem(cursor);
+            for(int i=cursor_pos; i<textDir.length(); i++)
+                textDir.at(i)->setPos(559+7*i, 60);
+        }
+        else if((key==Qt::Key_Delete)&&(cursor_pos<textDir.length()))
+        {
+            delete textDir.at(cursor_pos);
+            textDir.removeAt(cursor_pos);
+            for(int i=cursor_pos; i<textDir.length(); i++)
+                textDir.at(i)->setPos(559+7*i, 60);
+        }
 	}
     else//уровень
     {
@@ -800,6 +983,10 @@ void MyQGraphicsView::Completed()
     output.close();
     input.remove();
     output.rename(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
+    level_names.clear();
+    level_records.clear();
+    LevelListCreator level_list_creator;
+    level_list_creator.start();
     QGraphicsTextItem *Score=new QGraphicsTextItem("Score: "+QString::number(int(score)));
     Score->setFont(QFont("helvetica", 12));
     Score->setPos(0, -54);

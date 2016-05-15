@@ -82,7 +82,6 @@ private:
     const float WallWidth=5, DistBetweenWallEl=3, BallR=20;
     float PrevPointX=-100, PrevPointY;
     QPointF BallStartPos=QPointF(100, 100);
-    float BallStartDir=270+45;
     bool isInMenu, isInMainMenu, isInPauseMenu, isInCompletedMenu=false, LeftButtonDown=false;
     bool isTimeLaunched, AddMode, isInChooseLevelMenu=false, isInLevelEditor=false;
     int levels_number_on_inset, inset_number, cur_inset=1, cur_level;
@@ -98,6 +97,7 @@ private:
     static const int32 positionIterations = 3;
     QVector <QGraphicsTextItem*> textDir;
     QGraphicsLineItem *cursor;
+    int cursor_pos=1;
 
     //QTimer *timer;
     b2World *world;
@@ -110,6 +110,9 @@ private:
     //std::stack<b2Body*> userObjectsStack;
     //std::stack<QGraphicsItem*> userGraphObjectsStack;
     QVector <b2Body*> userObjects;
+    QVector <b2Body*> levelObjects;
+    QVector <QPointF> point1;//начало level line
+    QVector <QPointF> point2;//конец level line
     QList<dynamicBodyDefaultParams> defParams;
     QList<dynamicBodyDefaultParams>::iterator defParamsIt;
     b2Body* ballPointer;
