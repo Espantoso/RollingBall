@@ -86,7 +86,7 @@ void MyQGraphicsView::UpdateScore()
         isZeroScore=false;
     }
 }
-void MyQGraphicsView::createWorld(QGraphicsScene *scene, QGraphicsView *view)
+/*void MyQGraphicsView::createWorld(QGraphicsScene *scene, QGraphicsView *view)
 {
     view->setRenderHint(QPainter::Antialiasing);
     resize(winWidth, winHeight);
@@ -110,7 +110,7 @@ void MyQGraphicsView::createWorld(QGraphicsScene *scene, QGraphicsView *view)
     /////////////////////////////////////
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updatePhysics()));
-}
+}*/
 
 QGraphicsLineItem* MyQGraphicsView::createStaticLine(int x1, int y1, int x2, int y2, QString type/*="not user"*/)
 {
@@ -137,7 +137,7 @@ QGraphicsLineItem* MyQGraphicsView::createStaticLine(int x1, int y1, int x2, int
     body->SetUserData(line);
     return line;
 }
-void MyQGraphicsView::createCircle(int x, int y, int r)
+/*void MyQGraphicsView::createCircle(int x, int y, int r)
 {
     b2BodyDef bodyDef;
     bodyDef.type = b2_dynamicBody;
@@ -160,11 +160,11 @@ void MyQGraphicsView::createCircle(int x, int y, int r)
     ellipse->setRect(-r, -r, r*2 ,r*2);
     scene->addItem(ellipse);
     //userGraphObjectsStack.push(ellipse);
-	body->ApplyLinearImpulse(b2Vec2(50, 0), b2Vec2(1, 1), 1);
+    body->ApplyLinearImpulse(b2Vec2(50, 0), b2Vec2(1, 1), 1);
     body->SetUserData(ellipse);
 
     bodyList<<body;
-}
+}*/
 void MyQGraphicsView::createCircle(int x, int y, int r, float density, float friction, float restitution, b2Vec2 impulse, b2Vec2 point)
 {
 	b2BodyDef bodyDef;
@@ -441,7 +441,8 @@ void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsVi
     createStaticLine(winWidth-rightOffset, leftOffset, winWidth-rightOffset, winHeight-bottomOffset);//right border
     createStaticLine(leftOffset, topOffset, winWidth-rightOffset, leftOffset);//top border
     finish=scene->addRect(finish_x, finish_y, finish_w, finish_h, QPen(Qt::green), QBrush(Qt::green));
-    b2Vec2 impulse(70*cos(3.1415*Balldir/180), -70*sin(3.1415*Balldir/180)), point(1, 1);
+    impulse=b2Vec2(70*cos(3.1415*Balldir/180), -70*sin(3.1415*Balldir/180));
+    b2Vec2 point(1, 1);
     createCircle(Ballx, Bally, 10, 1, 0, 1, impulse, point);
 	timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updatePhysics()));
@@ -611,7 +612,7 @@ void MyQGraphicsView::RestartGame(QGraphicsScene *scene, QGraphicsView *graphics
     ballPointer->SetTransform(ballDefPos, 1.0f);
     ballPointer->SetAngularVelocity(0);
     ballPointer->SetLinearVelocity(b2Vec2(0,0));
-    ballPointer->ApplyLinearImpulse(b2Vec2(50, 0), b2Vec2(1, 1), 1);
+    ballPointer->ApplyLinearImpulse(impulse, b2Vec2(1, 1), 1);
     updatePhysics();
     scene->addRect(560, 50, 95, 30, QPen(Qt::gray), QBrush(Qt::gray));
     QGraphicsTextItem *Start=new QGraphicsTextItem("Start");

@@ -117,6 +117,7 @@ private:
     QList<dynamicBodyDefaultParams>::iterator defParamsIt;
     b2Body* ballPointer;
     b2Vec2 ballDefPos;
+    b2Vec2 impulse;
     //int numOfUserObjects;
     //modes
     bool simulation;
