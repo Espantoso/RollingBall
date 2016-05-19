@@ -1,6 +1,7 @@
 #include "myqgraphicsview.h"
 #include <QMessageBox>
 #include <math.h>
+#include "iostream"
 class LevelListCreator:public QThread
 {
 public:
@@ -376,10 +377,12 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             output.close();
             level_names.clear();
             level_records.clear();
-            LevelListCreator level_list_creator;
-            level_list_creator.start();
+			LevelListCreator *level_list_creator=new LevelListCreator();
+			level_list_creator->start();
             isInLevelEditor=false;
             isInMainMenu=true;
+			std::cout<<"SaveEnd\n";
+			std::cout.flush();
             MainMenu(scene, this);
         }
     }

@@ -235,6 +235,7 @@ void MyQGraphicsView::updatePhysics()
 }
 void MyQGraphicsView::StartGame(QGraphicsScene *scene, QGraphicsView *graphicsView, QFile *file)
 {
+	score=1000;
     AddMode=true;
     isInMenu=false;
     simulation=false;
