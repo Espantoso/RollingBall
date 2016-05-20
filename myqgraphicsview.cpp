@@ -37,7 +37,7 @@ public:
         int i=1;
         while(true)
         {
-            QFile file(QString("levels/level")+QString::number(i)+QString(".txt"));
+            QFile file(QString("RollingBall Files/levels/level")+QString::number(i)+QString(".txt"));
             if((file.open(QIODevice::ReadOnly))&&(i<=100))
             {
                 QByteArray level_name=file.readLine();
@@ -578,7 +578,7 @@ void MyQGraphicsView::RestartGame(QGraphicsScene *scene, QGraphicsView *graphics
     AddMode=true;
     isInMenu=false;
     isTimeLaunched=false;
-    QFile *file=new QFile(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
+    QFile *file=new QFile(QString("RollingBall Files/levels/level")+QString::number(cur_level)+QString(".txt"));
     if(file->open(QIODevice::ReadOnly))//вывод настроек уровня на экран для тестирования
     {
         QTextStream instream(file);
@@ -652,7 +652,7 @@ void MyQGraphicsView::MainMenu(QGraphicsScene *scene, QGraphicsView *graphicsVie
     point1.clear();
     point2.clear();
     graphicsView->setScene(scene);
-    QPixmap *image=new QPixmap("images/MainMenu.jpg");
+    QPixmap *image=new QPixmap("RollingBall Files/images/MainMenu.jpg");
     QGraphicsPixmapItem *ImageItem=scene->addPixmap(*image);
     ImageItem->setPos(-image->width()/2+150, -image->height()/2);
     DrawButton(scene, 0, -150, 300, 50, "Choose level");
@@ -957,8 +957,8 @@ void MyQGraphicsView::Completed()
         DrawButton(scene, 0, 50, 300, 50, "Next level");
     DrawButton(scene, 0, 150, 300, 50, "Restart");
     DrawButton(scene, 0, 250, 300, 50, "Next menu");
-    QFile input(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
-    QFile output("levels/output.txt");
+    QFile input(QString("RollingBall Files/levels/level")+QString::number(cur_level)+QString(".txt"));
+    QFile output("RollingBall Files/levels/output.txt");
     input.open(QIODevice::ReadOnly);
     output.open(QIODevice::WriteOnly);
     QTextStream instream(&input);
@@ -984,7 +984,7 @@ void MyQGraphicsView::Completed()
     input.close();
     output.close();
     input.remove();
-    output.rename(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
+    output.rename(QString("RollingBall Files/levels/level")+QString::number(cur_level)+QString(".txt"));
     level_names.clear();
     level_records.clear();
     LevelListCreator level_list_creator;

@@ -10,7 +10,7 @@ public:
         int i=1;
         while(true)
         {
-            QFile file(QString("levels/level")+QString::number(i)+QString(".txt"));
+            QFile file(QString("RollingBall Files/levels/level")+QString::number(i)+QString(".txt"));
             if((file.open(QIODevice::ReadOnly))&&(i<=100))
             {
                 QByteArray level_name=file.readLine();
@@ -93,14 +93,14 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
 			score=1000;
             isInCompletedMenu=false;
             cur_level++;
-            QFile *file=new QFile(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
+            QFile *file=new QFile(QString("RollingBall Files/levels/level")+QString::number(cur_level)+QString(".txt"));
             StartGame(scene, this, file);
         }
         if((pt.x()>0)&&((pt.x()<300))&&(pt.y()>150)&&((pt.y()<200)))//Рестарт
         {
 			score=1000;
             isInCompletedMenu=false;
-            QFile *file=new QFile(QString("levels/level")+QString::number(cur_level)+QString(".txt"));
+            QFile *file=new QFile(QString("RollingBall Files/levels/level")+QString::number(cur_level)+QString(".txt"));
             StartGame(scene, this, file);
         }
         if((pt.x()>0)&&((pt.x()<300))&&(pt.y()>250)&&((pt.y()<300)))//Главное меню
@@ -207,14 +207,14 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
             {
                 isInChooseLevelMenu=false;
                 cur_level=i+1;
-                QFile *file=new QFile(QString("levels/level")+QString::number((cur_inset-1)*10+i+1)+QString(".txt"));
+                QFile *file=new QFile(QString("RollingBall Files/levels/level")+QString::number((cur_inset-1)*10+i+1)+QString(".txt"));
                 StartGame(scene, this, file);
             }
             if((i%2==1)&&(pt.x()>300)&&(pt.x()<500)&&(pt.y()>50*(i-1))&&(pt.y()<50*(i-1)+50))
             {
                 isInChooseLevelMenu=false;
                 cur_level=i+1;
-                QFile *file=new QFile(QString("levels/level")+QString::number((cur_inset-1)*10+i+1)+QString(".txt"));
+                QFile *file=new QFile(QString("RollingBall Files/levels/level")+QString::number((cur_inset-1)*10+i+1)+QString(".txt"));
                 StartGame(scene, this, file);
             }
         }
@@ -359,7 +359,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent * e)
         }
         else if((pt.x()>560)&&(pt.x()<655)&&(pt.y()>175)&&(pt.y()<205))//сохранить
         {
-            QFile output(QString("levels/level")+QString::number(level_names.length()+1)+QString(".txt"));
+            QFile output(QString("RollingBall Files/levels/level")+QString::number(level_names.length()+1)+QString(".txt"));
             output.open(QIODevice::WriteOnly);
             QTextStream outstream(&output);
             outstream<<"level"+QString::number(level_names.length()+1)+"\r\n";
