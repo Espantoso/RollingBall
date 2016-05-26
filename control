@@ -1,0 +1,6 @@
+Package: RollingBall
+Version: 1.0-1
+Section: games
+Architecture: all
+Maintainer: Andrei <andrei_hedorov@mail.ru>
+Description: It is the 2D game, there the tusk is to move ball to finish using adding of walls
