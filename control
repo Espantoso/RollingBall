@@ -1,6 +1,7 @@
 Package: RollingBall
 Version: 1.0-1
 Section: games
-Architecture: all
+Depends: qt5-default, libqt5webkit5-dev, qtquick1-5-dev, qtlocation5-dev, qtsensors5-dev, qtdeclarative5-dev, libsqlite3-dev
+Architecture: amd64
 Maintainer: Andrei <andrei_hedorov@mail.ru>
 Description: It is the 2D game, there the tusk is to move ball to finish using adding of walls
